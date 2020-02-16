@@ -1,0 +1,63 @@
+}
+
+   "resolutions": {
+   "**/**/fs-capacitor":"^5.0.0",
+     "**/graphql-upload": "^9.0.0"
+ }
+  const { filename, mimetype, createReadStream } = await file;
+            var stream = createReadStream();
+            var value="";
+            try {
+                
+               
+
+                const upload_stream = cloudinary.uploader.upload_stream(
+                    {
+                        tags: "avatar",
+                        folder: "avatar/" + userID,
+                        /*use_filename: true,
+                        unique_filename :false,
+                        public_id:"avatar"*/
+                    },
+
+                    async (error, result) => {
+                        if (result) {
+                            //image_url= result.url;
+                            console.log(result.url);
+                            return value= result.url;
+                            console.log("value"+value);
+                            //return { "code": "200", "success": true, message: "Upload success", "image_url": result.url };
+                               // console.log(result;
+                               
+                           /* return await Promise(res => {
+                                var data = stream.pipe(upload_stream);
+                                data.on("finish", () => {
+
+                                });
+                                data.on("end", () => {
+                                    return {"image_url": result.url}
+                                   // return { "code": "200", "success": true, message: "Upload success", "image_url": result.url };
+                                })
+
+                            }).catch(e =>{
+                                console.log(e);
+                            })*/
+
+                        } else {
+                            return  { "code": "400", "fail": true, message: "Upload fail", "image_url": "asd" };
+                            //console.log(error);
+                        }
+                        
+                    }
+                    
+                );
+                stream.pipe(upload_stream);
+        
+                
+               
+            } catch (error) {
+                console.log(error);
+                return { "code": "400", "fail": true, message: "Upload fail", "image_url": "null" };
+
+                // print(error);
+            }
