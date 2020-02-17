@@ -1,9 +1,9 @@
 
-const Room = require('./models/room')
+const {Room} = require('./models/room')
 const User = require('./models/user')
 const GlobalRoom = require('./models/global_room');
 const RoomChat = require('./models/chat_room');
-const ListGame = require('./models/list_game');
+const {ListGame} = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
 const ApporoveList = require('./models/approve_list');
 const { GraphQLUpload } = require('graphql-upload');
@@ -21,6 +21,7 @@ module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
     AuthResponse,Message,MutationResponse,ResultTest,
+    
     Query: {
 
         generateToken: async (_, { id }) => {
@@ -31,14 +32,21 @@ module.exports = resolvers = {
             return token;
         },
 
-        async getAllRoom(_, {page,limit}, { token }) {
+        async getAllRoom(_, {page,limit}, { token ,dataloaders:{roomLoader}}) {
+          
+            
+            //roomLoader.load("5e46bcba3660fe0c1811c209")
             // if (!token) {
             //     console.log("No access token provided !")
             //     throw new AuthenticationError("No access token provided !")
             // }
             // else 
-
+           
             return Room.paginate({},{ page: page,limit: limit,}).then((v)=>{
+                for (const iterator of v.docs) {
+                    roomLoader.load(iterator._id);
+                }
+              
                 return v.docs;
             }).catch((e)=>{
                 return null;
@@ -187,7 +195,7 @@ module.exports = resolvers = {
             })
         },
 
-        async getListGame(root, { limit }) {
+        async getListGame(root, { limit },{dataloaders:{listGameLoader}}) {
             //return ListGame.create(input);
             if (limit == 1) {
                 return await ListGame.find({}, {}, { slice: { 'image': 1 } }).then((f) => {
@@ -197,8 +205,12 @@ module.exports = resolvers = {
             }
             if (limit == 0) {
                 return await ListGame.find({}, {}, { slice: { 'image': [1, 100] } }).then((f) => {
-                    //console.log(f._doc);
-                    return f;
+                    //console.log(f);
+                    for (const iterator of f) {
+                        listGameLoader.load(iterator);
+                    }
+                    return f
+                    
                 });
             }
 
@@ -206,7 +218,7 @@ module.exports = resolvers = {
         getRandomGame: async (root) => {
             return await ListGame.find({}, {}, { slice: { 'image': 1 } }).then((f) => {
                 var listImage = [];
-                console.log(f)
+                //console.log(f)
                 return f;
             });
         },

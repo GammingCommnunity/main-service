@@ -8,7 +8,7 @@ const typeDefs = gql`
     scalar Upload
     scalar Date
     type Query{
-       
+        
         generateToken(id:String!):String
         
         

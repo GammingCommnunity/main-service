@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
-const Room = mongoose.Schema({
+const DataLoader= require('dataloader');
+const Rooms = mongoose.Schema({
   roomName: String,
   isPrivate: {
     type: Boolean,
@@ -23,5 +24,11 @@ const Room = mongoose.Schema({
     default:Date.now()
   }
 })
-Room.plugin(mongoosePaginate);
-module.exports = mongoose.model('roomList', Room);
+Rooms.plugin(mongoosePaginate);
+const getRoomLoader = () => new DataLoader((roomID) => {
+  //console.log(roomIDc);
+  
+  return Room.find({ _id: { $in: roomID }});
+})
+const Room= mongoose.model('roomList', Rooms);
+module.exports = {Room,getRoomLoader};

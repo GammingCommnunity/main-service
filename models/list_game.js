@@ -1,4 +1,6 @@
 const mongoose=  require('mongoose');
+const DataLoader= require('dataloader');
+
 const list_game= mongoose.Schema({
     game_name:String,
     genres: [String],
@@ -9,4 +11,10 @@ const list_game= mongoose.Schema({
     image:[String],
     cover_image:String
 })
-module.exports = mongoose.model("ListGame",list_game);
+const ListGame= mongoose.model("ListGame",list_game);
+const getListGameLoader = () => new DataLoader((gameID) => {
+    //console.log(roomIDc);
+    
+    return ListGame.find({ _id: { $in: gameID }});
+  })
+module.exports = {ListGame,getListGameLoader};

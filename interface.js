@@ -14,6 +14,11 @@ const Interface= {
             return null;
         },
     },
+    gameInfo:{
+        __resolveType(AuthResponse, context, info) {
+            return null;
+        },
+    },
     ResultTest: {
 
         __resolveType(obj, context, info) {
