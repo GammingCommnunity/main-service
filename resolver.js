@@ -1,7 +1,7 @@
 
-const {Room} = require('./models/room')
+const { Room } = require('./models/room')
 const RoomChat = require('./models/chat_room');
-const {ListGame} = require('./models/list_game');
+const { ListGame } = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
 const ApporoveList = require('./models/approve_list');
 const { GraphQLUpload } = require('graphql-upload');
@@ -11,12 +11,12 @@ const path = require('path');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
-const {AuthResponse,Message,MutationResponse,ResultTest} = require('./interface');
+const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
-    AuthResponse,Message,MutationResponse,ResultTest,
-    
+    AuthResponse, Message, MutationResponse, ResultTest,
+
     Query: {
 
         generateToken: async (_, { id }) => {
@@ -27,35 +27,35 @@ module.exports = resolvers = {
             return token;
         },
 
-        async getAllRoom(_, {page,limit}, { token ,dataloaders:{roomLoader}}) {
-          
-            
+        async getAllRoom(_, { page, limit }, { token, dataloaders: { roomLoader } }) {
+
+
             //roomLoader.load("5e46bcba3660fe0c1811c209")
             // if (!token) {
             //     console.log("No access token provided !")
             //     throw new AuthenticationError("No access token provided !")
             // }
             // else 
-           
-            return Room.paginate({},{ page: page,limit: limit,}).then((v)=>{
+
+            return Room.paginate({}, { page: page, limit: limit, }).then((v) => {
                 for (const iterator of v.docs) {
                     roomLoader.load(iterator._id);
                 }
-              
+
                 return v.docs;
-            }).catch((e)=>{
+            }).catch((e) => {
                 return null;
             })
         },
-        async getPrivateChat(root,{ID}){
-            return ChatPrivate.find({"hostID":ID});
+        async getPrivateChat(root, { ID }) {
+            return ChatPrivate.find({ "hostID": ID });
         },
 
         async getAllRoomChat() {
             return await RoomChat.find();
         },
-        
-   
+
+
 
         async RmvMbFrRoom(root, { type, userID, roomID }) {
             if (type == "all") {
@@ -82,23 +82,7 @@ module.exports = resolvers = {
             }
 
         },
-        async editRoom(root, { idRoom, newData }) {
-            return Room.findOneAndUpdate(
-                { "_id": idRoom },
-                {
-                    $set: {
-                        "room_name": newData.room_name,
-                        "isPrivate": newData.isPrivate,
 
-                        "description": newData.description
-                    }
-                },
-                { upsert: true, 'new': true }).then(res => {
-                    return { "data": res, "result": true }
-                }).catch(err => {
-                    return { err, "result": false }
-                })
-        },
         async changeHost(root, { oldHost, newHost }) {
 
 
@@ -113,15 +97,15 @@ module.exports = resolvers = {
             })
         },
 
-       /* async joinRoomChat(root, { id_room, id_user }) {
-            return RoomChat.findOneAndUpdate({ "id_room": id_room }, { $push: { member: v } }, { upsert: true, new: true }).then(value => {
-                console.log(value)
-                    return { "data": value, "result": true };
-           }).catch(err => {
-                    return { "data": err, "result": false };
-            })
-          
-        },*/
+        /* async joinRoomChat(root, { id_room, id_user }) {
+             return RoomChat.findOneAndUpdate({ "id_room": id_room }, { $push: { member: v } }, { upsert: true, new: true }).then(value => {
+                 console.log(value)
+                     return { "data": value, "result": true };
+            }).catch(err => {
+                     return { "data": err, "result": false };
+             })
+           
+         },*/
         /*async onJoinRoom(root, { id_room, id_user, pwd }) {
             return Room.findById(id_room).then(async value => {
 
@@ -159,16 +143,22 @@ module.exports = resolvers = {
         },*/
         async addMember(root, { roomID, userID }) {
             return Room.findByIdAndUpdate(roomID, { $push: { member: userID } }, { upsert: true, new: true }).then(result => {
-                    console.log(result);
-                    if (value) { return  { 
-                        status:201, 
+                console.log(result);
+                if (value) {
+                    return {
+                        status: 201,
                         "success": true,
-                        message:"Add success!" } }
-                }).catch(err => { return  { 
-                    status:401, 
+                        message: "Add success!"
+                    }
+                }
+            }).catch(err => {
+                return {
+                    status: 401,
                     "success": false,
-                    message:"Add failded!" } })
-         
+                    message: "Add failded!"
+                }
+            })
+
         },
         //them tin nhan vao group chat 
         async chatGroup(root, { id_room, chat_message }) {
@@ -190,7 +180,7 @@ module.exports = resolvers = {
             })
         },
 
-        async getListGame(root, { limit },{dataloaders:{listGameLoader}}) {
+        async getListGame(root, { limit }, { dataloaders: { listGameLoader } }) {
             //return ListGame.create(input);
             if (limit == 1) {
                 return await ListGame.find({}, {}, { slice: { 'image': 1 } }).then((f) => {
@@ -205,7 +195,7 @@ module.exports = resolvers = {
                         listGameLoader.load(iterator);
                     }
                     return f
-                    
+
                 });
             }
 
@@ -237,11 +227,11 @@ module.exports = resolvers = {
                 return v;
             })
         },
-        getRoomByGame: async (root,{gameID})=>{
-            return Room.aggregate([{$match:{"game.gameID":gameID}}]);
+        getRoomByGame: async (root, { gameID }) => {
+            return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
-        roomManage: async (_,{hostID})=>{
-            return Room.aggregate([{$match:{"hostID":hostID}}]);
+        roomManage: async (_, { hostID }) => {
+            return Room.aggregate([{ $match: { "hostID": hostID } }]);
         }
     },
     Mutation: {
@@ -252,85 +242,69 @@ module.exports = resolvers = {
             });
         }
         ,
-        async removeRoom(root, { roomID ,userID},context) {
-            try {
-                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
-                if (result.id == userID ) {
-                    return Room.deleteOne({ "_id": roomID }).then((v)=>{
-                        return { 
-                            status:201, 
-                            "success": true,
-                            message:"Remove success!" }
-                    }).catch((e)=>{
-                        return { 
-                            status:201, 
-                            "success": true,
-                            message:"Remove failed!" }
-                    });
-                }
-            }
-            catch(e){
-                return new AuthenticationError("Wrong token");
-            }
-            
-        },
-        createRoom: async (root, { roomInput, roomChatInput, userID }, context) => {
-         
-            try {
-                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
-                if (result.id == userID ) {
-                    return Room.aggregate([{$match:{"roomName":roomInput.roomName}}]).then((v)=>{
-                        if(v.length>0){
-                            return { 
-                                status:400, 
-                                "success": false,
-                                message:"This name already taken" }
-                        }
-                        else return Room.create(roomInput).then(async (value) => {
-                            return RoomChat.create(roomChatInput).then(async (v) => { 
-                                return RoomChat.findByIdAndUpdate(v._id,{"roomID":value._id}).then((v)=>{
-                                    return { 
-                                        status:201, 
-                                        "success": true,
-                                        message:"Create success!" }
-                                })              
-                                  
-                                })                  
-                        }).catch(err => {
-                            return { status:400, "success": false,"message":"Create failed!" }
-                        })
-                    })
-                  
-                }
-                else return { status:400, "success": false,"message":"You have wrong certificate!" }
-            } catch (error) {
-
-                return new AuthenticationError("Wrong token");
-            }
-
-
-        },
-       /* async removeRoom(root, { idRoom, userID }, context) {
+        async removeRoom(root, { roomID, userID }, context) {
             try {
                 let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
                 if (result.id == userID) {
-                    return Room.deleteOne({ "_id": idRoom }).then(result => {
-
-                        if (result.deletedCount > 0) {
-                            return { "statusCode": "200", "result": true }
+                    return Room.deleteOne({ "_id": roomID }).then((v) => {
+                        return {
+                            status: 201,
+                            "success": true,
+                            message: "Remove success!"
                         }
-                        else {
-                            return { "statusCode": "400", "result": false }
+                    }).catch((e) => {
+                        return {
+                            status: 201,
+                            "success": true,
+                            message: "Remove failed!"
                         }
-
-                    }).catch(err => {
-                        return { "statusCode": "400", "result": false }
                     });
                 }
+            }
+            catch (e) {
+                return {
+                    status: 201,
+                    "success": true,
+                    message: new AuthenticationError("Wrong token")
+                }
+            }
+        },
+        createRoom: async (root, { roomInput, roomChatInput, userID }, context) => {
+
+            try {
+                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
+                if (result.id == userID) {
+                    return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
+                        if (v.length > 0) {
+                            return {
+                                status: 400,
+                                "success": false,
+                                message: "This name already taken"
+                            }
+                        }
+                        else return Room.create(roomInput).then(async (value) => {
+                            return RoomChat.create(roomChatInput).then(async (v) => {
+                                return RoomChat.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
+                                    return {
+                                        status: 201,
+                                        "success": true,
+                                        message: "Create success!"
+                                    }
+                                })
+
+                            })
+                        }).catch(err => {
+                            return { status: 400, "success": false, "message": "Create failed!" }
+                        })
+                    })
+
+                }
+                else return { status: 400, "success": false, "message": "You have wrong certificate!" }
             } catch (error) {
                 return new AuthenticationError("Wrong token");
             }
-        },*/
+        },
+        
 
         /**
          * 
@@ -356,23 +330,13 @@ module.exports = resolvers = {
                             }
                         }
                         else return ApporoveList.create(info).then((v) => {
-
-                            return {
-                                "message": "Waiting for apporove",
-                                "status": 200,
-                                "result": true
-                            };;
+                            return {"message": "Waiting for apporove","status": 200, "result": true};;
 
                         })
                     })
-
                 }
                 else {
-                    return {
-                        "message": "You are host",
-                        "status": 401,
-                        "result": false
-                    };
+                    return {"message": "You are host","status": 401,"result": false};
                 }
 
             })
@@ -390,6 +354,39 @@ module.exports = resolvers = {
                 }
             })*/
 
+        },
+        editRoom: async (_, { hostID, roomID, newData },context) => {
+           
+           
+            try {
+                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
+                
+                
+                if (result.id == hostID) {
+                    return Room.findOneAndUpdate(
+                        { "_id": roomID },
+                        {
+                            $set: {
+                                "roomName": newData.roomName,
+                                "isPrivate": newData.isPrivate,
+                                "description": newData.description,
+                                "member":newData.member,
+                                "maxOfMember":newData.maxOfMember,
+                            }
+                        },
+                        { upsert: true, 'new': true }).then(res => {
+                            return { status: 200, "success": true, "message": "Update success!" }
+                        }).catch(err => {
+                           
+                            return { status: 401, "success": false, "message": "Somethings wrong during update..."}
+                        })
+                }
+            } catch (error) {
+                return {
+                    status: 401, "success": false, "message": "You have wrong certificate!"
+                }
+            }
+            
         },
         /*async chatGlobal({ name, input }) {
             GlobalRoom.findOneAndUpdate({ room_name: name }, { $push: { message: input } }, { upsert: true, rawResult: true }, (err, doc) => {

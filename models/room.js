@@ -11,7 +11,10 @@ const Rooms = mongoose.Schema({
     gameID: String,
     gameName: String
   },
-  description: String,
+  description: {
+    type:String,
+    default:""
+  },
   maxOfMember: {
     type:Number,
     default:1

@@ -20,10 +20,7 @@ const typeDefs = gql`
         support 2 'type': remove all people ('all') and remove once people('once')***
         """
         RmvMbFrRoom(type:String!,userID:String,roomID:String):Result
-        """ 
-        ***Edit room info***
-        """
-        editRoom(idRoom:ID!,newData:RoomInput):Result
+        
         """ 
         ***Change host (require token)***
         """
@@ -294,6 +291,12 @@ const typeDefs = gql`
 
         """
         removeRoom(roomID:ID!,userID:String!):ResultCRUD
+
+        """ 
+        ***Edit room info***
+        """
+        editRoom(roomID:ID!,hostID:ID!,newData:RoomInput):ResultCRUD
+
         """
             *** Chat with someone privately***
 
