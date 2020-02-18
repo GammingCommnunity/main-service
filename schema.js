@@ -10,8 +10,6 @@ const typeDefs = gql`
     type Query{
         
         generateToken(id:String!):String
-        
-        
         """
         *** Support paginate, page is number of page u want to show value, 
         limit is number of values in one page ***
@@ -80,11 +78,13 @@ const typeDefs = gql`
         """
         approveList_User(userID:String!):[ApproveList]
         """
-            *** get room by game, specify gameID to find
-            ***
+            *** get room by game, specify gameID to find***
         """
         getRoomByGame(gameID:String!):[Room]
-        
+        """
+            *** get room by hostID, specify hostID to find***
+        """
+        roomManage(hostID:String!):[Room]
     }
     interface Message{
         text: String,
@@ -335,6 +335,7 @@ const typeDefs = gql`
 
 const schema = makeExecutableSchema({
     typeDefs: typeDefs,
+
     resolvers:
         Resolvers,
     

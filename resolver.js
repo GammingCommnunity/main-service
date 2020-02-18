@@ -1,21 +1,16 @@
 
 const {Room} = require('./models/room')
-const User = require('./models/user')
-const GlobalRoom = require('./models/global_room');
 const RoomChat = require('./models/chat_room');
 const {ListGame} = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
 const ApporoveList = require('./models/approve_list');
 const { GraphQLUpload } = require('graphql-upload');
 const Date = require('./custom-scalar/Date.scalar');
-const _ = require('lodash');
-const fs = require('fs')
 require('dotenv').config();
 const path = require('path');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
-var promisesAll = require('promises-all');
 const {AuthResponse,Message,MutationResponse,ResultTest} = require('./interface');
 module.exports = resolvers = {
     Upload: GraphQLUpload,
@@ -59,7 +54,7 @@ module.exports = resolvers = {
         async getAllRoomChat() {
             return await RoomChat.find();
         },
- 
+        
    
 
         async RmvMbFrRoom(root, { type, userID, roomID }) {
@@ -244,6 +239,9 @@ module.exports = resolvers = {
         },
         getRoomByGame: async (root,{gameID})=>{
             return Room.aggregate([{$match:{"game.gameID":gameID}}]);
+        },
+        roomManage: async (_,{hostID})=>{
+            return Room.aggregate([{$match:{"hostID":hostID}}]);
         }
     },
     Mutation: {
