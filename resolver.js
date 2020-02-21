@@ -48,7 +48,7 @@ module.exports = resolvers = {
             })
         },
         async getPrivateChat(root, { ID }) {
-            return ChatPrivate.find({ "hostID": ID });
+            return ChatPrivate.find({ "currentUserID": ID });
         },
 
         async getAllRoomChat() {
@@ -404,6 +404,13 @@ module.exports = resolvers = {
 
             })
 
+        },
+        async createPrivateChat(root,{input}){
+            return ChatPrivate.create(input).then((v)=>{
+                return { status: 200, "success": true, "message": "Create success!" }
+            }).catch((v)=>{
+                return { status: 401, "success": false, "message": "Create fail..." }
+            });
         },
         /*async createChatGlobal(root, { input }) {
             return await GlobalRoom.create(input);

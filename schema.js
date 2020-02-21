@@ -267,6 +267,10 @@ const typeDefs = gql`
         logo:String
         image:[String]
     }
+    input CreateChatInput{
+        currentUserID:String!
+        friendID:String!
+    }
      
     type Mutation{
         """
@@ -324,6 +328,7 @@ const typeDefs = gql`
             currentUserID:String!,
             
             info:Info!):ResultCRUD
+        createPrivateChat(input:CreateChatInput):ResultCRUD
         """
             *** (No usage) ***
 

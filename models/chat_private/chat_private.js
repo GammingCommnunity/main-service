@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const ChatPrivate = mongoose.Schema({
-    hostID: String,
+    currentUserID: String,
+    friendID:String,
     messages:[
         {
-            userID:String,
+            ID:String,
             text:String,
             createAt:{
                 type:Date,
