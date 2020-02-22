@@ -89,6 +89,7 @@ const typeDefs = gql`
     }
 
     type PrivateChat{
+        
         messages:[
             PrivateChatMessages
         ]
@@ -243,7 +244,6 @@ const typeDefs = gql`
     }
    
     input MessageInput{
-        userID:String!
         text:String!
         createAt:Date
     }
@@ -306,7 +306,7 @@ const typeDefs = gql`
 
         """
         chatPrivate(
-            userID:String,
+            currentUserID:String,
             friendID:String,
             input:MessageInput):ResultCRUD
         """

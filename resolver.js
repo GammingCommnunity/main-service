@@ -48,7 +48,26 @@ module.exports = resolvers = {
             })
         },
         async getPrivateChat(root, { ID }) {
-            return ChatPrivate.find({ "currentUserID": ID });
+            // cond 1: ID is the host
+            return ChatPrivate.find({
+                $and: [
+                    { $or: [{ "currentUserID": ID }, { "friendID": ID }] },
+                ]
+            }).then(async (v) => {
+                return v;
+
+
+
+            })/*.catch(async (err) => {
+                // cond 2: ID is the guest
+                return ChatPrivate.find({ $in: { "friendID": ID } }).then((v) => {
+                    return v;
+                })
+
+            });*/
+
+
+
         },
 
         async getAllRoomChat() {
@@ -304,7 +323,7 @@ module.exports = resolvers = {
                 return new AuthenticationError("Wrong token");
             }
         },
-        
+
 
         /**
          * 
@@ -330,38 +349,24 @@ module.exports = resolvers = {
                             }
                         }
                         else return ApporoveList.create(info).then((v) => {
-                            return {"message": "Waiting for apporove","status": 200, "result": true};;
+                            return { "message": "Waiting for apporove", "status": 200, "result": true };;
 
                         })
                     })
                 }
                 else {
-                    return {"message": "You are host","status": 401,"result": false};
+                    return { "message": "You are host", "status": 401, "result": false };
                 }
 
             })
-
-            /*return Room.findByIdAndUpdate({ "_id": id_room }, { $push: { "member": [id_user] } }, {
-                runValidators: true,
-                setDefaultsOnInsert: true,
-                rawResult: true,
-            }).then((value) => {
-                if (value.ok == 1) {
-                    return { "code": "200", "success": true, message: "Join Success" }
-                }
-                else {
-                    return { "code": "400", "success": false, message: "Something wrong" }
-                }
-            })*/
-
         },
-        editRoom: async (_, { hostID, roomID, newData },context) => {
-           
-           
+        editRoom: async (_, { hostID, roomID, newData }, context) => {
+
+
             try {
                 let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
-                
-                
+
+
                 if (result.id == hostID) {
                     return Room.findOneAndUpdate(
                         { "_id": roomID },
@@ -370,15 +375,15 @@ module.exports = resolvers = {
                                 "roomName": newData.roomName,
                                 "isPrivate": newData.isPrivate,
                                 "description": newData.description,
-                                "member":newData.member,
-                                "maxOfMember":newData.maxOfMember,
+                                "member": newData.member,
+                                "maxOfMember": newData.maxOfMember,
                             }
                         },
                         { upsert: true, 'new': true }).then(res => {
                             return { status: 200, "success": true, "message": "Update success!" }
                         }).catch(err => {
-                           
-                            return { status: 401, "success": false, "message": "Somethings wrong during update..."}
+
+                            return { status: 401, "success": false, "message": "Somethings wrong during update..." }
                         })
                 }
             } catch (error) {
@@ -386,7 +391,7 @@ module.exports = resolvers = {
                     status: 401, "success": false, "message": "You have wrong certificate!"
                 }
             }
-            
+
         },
         /*async chatGlobal({ name, input }) {
             GlobalRoom.findOneAndUpdate({ room_name: name }, { $push: { message: input } }, { upsert: true, rawResult: true }, (err, doc) => {
@@ -395,30 +400,57 @@ module.exports = resolvers = {
         },*/
         // id_user: id from host message, id_friends
 
-        async chatPrivate(root, { userID, friendID, input }) {
-            //default 2 id is a friends ...
+        async chatPrivate(root, { currentUserID, friendID, input }) {
+            //condition 1: currentID is the host.
+            return ChatPrivate.findOneAndUpdate(
+                { $and: [{ "currentUserID": currentUserID }, { $and: [{ "friendID": friendID }] }] }, { $push: { messages: input } }
+            ).then(async (v) => {
 
-            return ChatPrivate.create(input).then(async (value) => {
-                // console.log(value._id);
-                return await ChatPrivate.findByIdAndUpdate(value._id, { $set: { "id_user": userID, "incommingMessage.$[].id_friend": friendID } }, { upsert: true, 'new': true });
+                console.log("Here" + v);
+                // condition 2: currentID is the guest.
+                if (v == null) {
+                    return ChatPrivate.findOneAndUpdate(
+                        { $and: [{ "friendID": currentUserID }, { $and: [{ "currentUserID": friendID }] }] }, { $push: { messages: input } }
+                    )
+                        .then(async (value) => {
+                            // mean conversation is not avaiable... notify user to craete new 
+                            if (value == null) { 
+                                return { status: 401, "success": false, "message": "Conversation is not avaialbe !" } 
+                            }
+                           // console.log(value);
+                            
+                            else return { status: 200, "success": true, "message": "Add messages success!" }
+
+            }).catch((err) => {
+                console.log("err");
 
             })
+        }
+                else return { status: 200, "success": true, "message": "Add messages success!" }
 
-        },
-        async createPrivateChat(root,{input}){
-            return ChatPrivate.create(input).then((v)=>{
-                return { status: 200, "success": true, "message": "Create success!" }
-            }).catch((v)=>{
-                return { status: 401, "success": false, "message": "Create fail..." }
-            });
-        },
-        /*async createChatGlobal(root, { input }) {
-            return await GlobalRoom.create(input);
-        },*/
 
-        async upload(root, { file, userID, type }) {
-            return (processUpload(file, userID));
-        },
+    }).catch(async (err) => {
+
+        return { status: 401, "success": false, "message": "Add messages failed!" }
+
+    });
+
+
+},
+    async createPrivateChat(root, { input }) {
+    return ChatPrivate.create(input).then((v) => {
+        return { status: 200, "success": true, "message": "Create success!" }
+    }).catch((v) => {
+        return { status: 401, "success": false, "message": "Create fail..." }
+    });
+},
+/*async createChatGlobal(root, { input }) {
+    return await GlobalRoom.create(input);
+},*/
+
+async upload(root, { file, userID, type }) {
+    return (processUpload(file, userID));
+},
     },
 
 }
