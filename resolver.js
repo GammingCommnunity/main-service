@@ -54,7 +54,7 @@ module.exports = resolvers = {
                     { $or: [{ "currentUserID": ID }, { "friendID": ID }] },
                 ]
             }).then(async (v) => {
-                return v;
+                return v
 
 
 

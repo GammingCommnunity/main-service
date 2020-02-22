@@ -89,7 +89,8 @@ const typeDefs = gql`
     }
 
     type PrivateChat{
-        
+        currentUserID:String
+        friendID:String
         messages:[
             PrivateChatMessages
         ]
