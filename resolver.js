@@ -51,7 +51,7 @@ module.exports = resolvers = {
             // cond 1: ID is the host
             return ChatPrivate.find({
                 $and: [
-                    { $or: [{ "currentUserID": ID }, { "friendID": ID }] },
+                    { $or: [{ "currentUser.id": ID }, { "friend.id": ID }] },
                 ]
             }).then(async (v) => {
                 return v
@@ -403,14 +403,14 @@ module.exports = resolvers = {
         async chatPrivate(root, { currentUserID, friendID, input }) {
             //condition 1: currentID is the host.
             return ChatPrivate.findOneAndUpdate(
-                { $and: [{ "currentUserID": currentUserID }, { $and: [{ "friendID": friendID }] }] }, { $push: { messages: input } }
+                { $and: [{ "currentUser.id": currentUserID }, { $and: [{ "friend.id": friendID }] }] }, { $push: { messages: input } }
             ).then(async (v) => {
 
                 console.log("Here" + v);
                 // condition 2: currentID is the guest.
                 if (v == null) {
                     return ChatPrivate.findOneAndUpdate(
-                        { $and: [{ "friendID": currentUserID }, { $and: [{ "currentUserID": friendID }] }] }, { $push: { messages: input } }
+                        { $and: [{ "friend.id": currentUserID }, { $and: [{ "currentUser.id": friendID }] }] }, { $push: { messages: input } }
                     )
                         .then(async (value) => {
                             // mean conversation is not avaiable... notify user to craete new 

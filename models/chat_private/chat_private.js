@@ -1,10 +1,20 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 const ChatPrivate = mongoose.Schema({
-    currentUserID: String,
-    friendID:String,
+    currentUser: {
+        id:String,
+        profile_url:String
+    },
+    friend: {
+        id: String,
+        profile_url: String
+    },
     messages:[
         {
-            ID:String,
+            user: {
+                id: String,
+                profile_url: String
+            },
             text:String,
             createAt:{
                 type:Date,
@@ -13,5 +23,6 @@ const ChatPrivate = mongoose.Schema({
         }
     ]
     
-})
+});
+ChatPrivate.plugin(mongoosePaginate);
 module.exports = mongoose.model('ChatPrivate', ChatPrivate);

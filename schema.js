@@ -87,17 +87,20 @@ const typeDefs = gql`
         text: String,
         createAt: Date
     }
-
+    type Profile{
+        id:String,
+        profile_url:String
+    }
     type PrivateChat{
-        currentUserID:String
-        friendID:String
+        currentUser:Profile
+        friend:Profile
         messages:[
             PrivateChatMessages
         ]
     }
     
     type PrivateChatMessages implements Message{
-        
+        user:Profile
         text:String,
         createAt:Date
     }
@@ -218,11 +221,7 @@ const typeDefs = gql`
         messages:[String],
         time:String
     }
-    input privateMessage{
-        id_friend:String
-        message:[String]
-        time:String
-    }
+    
     input newMessage{
         username:String!
         listmessage:[
@@ -245,10 +244,14 @@ const typeDefs = gql`
     }
    
     input MessageInput{
+        user:ProfileInput
         text:String!
         createAt:Date
     }
-  
+    input ProfileInput{
+        id:String
+        profile_url:String
+    }
     input RoomChatInput{
         member:[
             String
@@ -269,8 +272,8 @@ const typeDefs = gql`
         image:[String]
     }
     input CreateChatInput{
-        currentUserID:String!
-        friendID:String!
+        currentUser:ProfileInput!
+        friend:ProfileInput!
     }
      
     type Mutation{
@@ -320,14 +323,12 @@ const typeDefs = gql`
         """
             *** 
             Join a room 
-
             ***
 
         """
         joinRoom(
             roomID:String!,
             currentUserID:String!,
-            
             info:Info!):ResultCRUD
         createPrivateChat(input:CreateChatInput):ResultCRUD
         """
