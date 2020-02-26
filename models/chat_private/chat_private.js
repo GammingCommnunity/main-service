@@ -11,6 +11,7 @@ const ChatPrivate = mongoose.Schema({
     },
     messages:[
         {
+            
             user: {
                 id: String,
                 profile_url: String

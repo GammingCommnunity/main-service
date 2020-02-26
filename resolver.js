@@ -414,43 +414,57 @@ module.exports = resolvers = {
                     )
                         .then(async (value) => {
                             // mean conversation is not avaiable... notify user to craete new 
-                            if (value == null) { 
-                                return { status: 401, "success": false, "message": "Conversation is not avaialbe !" } 
+                            if (value == null) {
+                                return { status: 401, "success": false, "message": "Conversation is not avaialbe !" }
                             }
-                           // console.log(value);
-                            
+                            // console.log(value);
+
                             else return { status: 200, "success": true, "message": "Add messages success!" }
 
-            }).catch((err) => {
-                console.log("err");
-
-            })
-        }
+                        }).catch((err) => {
+                            console.log("err");
+                        })
+                }
                 else return { status: 200, "success": true, "message": "Add messages success!" }
 
+            }).catch(async (err) => {
 
-    }).catch(async (err) => {
+                return { status: 401, "success": false, "message": "Add messages failed!" }
 
-        return { status: 401, "success": false, "message": "Add messages failed!" }
+            });
+        },
 
-    });
-
-
-},
-    async createPrivateChat(root, { input }) {
-    return ChatPrivate.create(input).then((v) => {
-        return { status: 200, "success": true, "message": "Create success!" }
-    }).catch((v) => {
-        return { status: 401, "success": false, "message": "Create fail..." }
-    });
-},
-/*async createChatGlobal(root, { input }) {
-    return await GlobalRoom.create(input);
-},*/
-
-async upload(root, { file, userID, type }) {
-    return (processUpload(file, userID));
-},
+        async createPrivateChat(root, { input }) {
+            return ChatPrivate.create(input).then((v) => {
+                return { status: 200, "success": true, "message": "Create success!" }
+            }).catch((v) => {
+                return { status: 401, "success": false, "message": "Create fail..." }
+            });
+        },
+        /*async createChatGlobal(root, { input }) {
+            return await GlobalRoom.create(input);
+        },*/
+        deleteMessage: async (root, { currentUserID, friendID, messageID }) => {
+            return ChatPrivate.findOneAndUpdate(
+                { $and: [{ "currentUser.id": currentUserID }, 
+                { $and: [{ "friend.id": friendID }] }] },
+                {$pull:{"messages":{_id:messageID}}},
+               { rawResult: true,new:true }
+            ).then((v) => {
+                // error
+                if(v.value == null){
+                    return { status: 401, "success": false, "message": "Delete fail..." }
+                }
+                else  return { status: 200, "success": true, "message": "Delete success!" }
+            }).catch((err) => {
+                console.log(err);
+                
+                return { status: 401, "success": false, "message": "Delete fail..." }
+            });
+        },
+        async upload(root, { file, userID, type }) {
+            return (processUpload(file, userID));
+        },
     },
 
 }

@@ -84,6 +84,7 @@ const typeDefs = gql`
         roomManage(hostID:String!):[Room]
     }
     interface Message{
+        _id:ID
         text: String,
         createAt: Date
     }
@@ -95,11 +96,13 @@ const typeDefs = gql`
         currentUser:Profile
         friend:Profile
         messages:[
+            
             PrivateChatMessages
         ]
     }
     
     type PrivateChatMessages implements Message{
+        _id:ID
         user:Profile
         text:String,
         createAt:Date
@@ -331,10 +334,13 @@ const typeDefs = gql`
             currentUserID:String!,
             info:Info!):ResultCRUD
         createPrivateChat(input:CreateChatInput):ResultCRUD
+
+        deleteMessage(currentUserID:String!,friendID:String!,messageID:String!):ResultCRUD
         """
             *** (No usage) ***
 
         """
+
         upload(
             file: Upload!,
             userID:String,
