@@ -56,8 +56,6 @@ module.exports = resolvers = {
             }).then(async (v) => {
                 return v
 
-
-
             })/*.catch(async (err) => {
                 // cond 2: ID is the guest
                 return ChatPrivate.find({ $in: { "friendID": ID } }).then((v) => {
@@ -65,8 +63,6 @@ module.exports = resolvers = {
                 })
 
             });*/
-
-
 
         },
 
@@ -202,17 +198,18 @@ module.exports = resolvers = {
         async getListGame(root, { limit }, { dataloaders: { listGameLoader } }) {
             //return ListGame.create(input);
             if (limit == 1) {
-                return await ListGame.find({}, {}, { slice: { 'image': 1 } }).then((f) => {
+                return await ListGame.find({}, {}, { slice: { 'image': 1 } }).lean(true).then((f) => {
                     //console.log(f);
                     return f;
                 });
             }
             if (limit == 0) {
-                return await ListGame.find({}, {}, { slice: { 'image': [1, 100] } }).then((f) => {
+                return await ListGame.find({}, {}, { slice: { 'image': [1, 100] } }).lean(true).then((f) => {
                     //console.log(f);
-                    for (const iterator of f) {
+                    /*for (const iterator of f) {
                         listGameLoader.load(iterator);
-                    }
+                    }*/
+                    
                     return f
 
                 });
