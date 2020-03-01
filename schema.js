@@ -7,6 +7,35 @@ const typeDefs = gql`
     union ResultTest= Room|Game  
     scalar Upload
     scalar Date
+    enum Platforms {
+        windows
+        xbox_one
+        ps4
+        android
+        ios
+        nitendo_switch
+    }
+    
+    enum Genres{
+        action
+        advanture
+        arcade
+        casual
+        fps
+        multiplayer
+        hack_n_slash
+        loot
+        sci_fi
+        shooter
+        indie
+        tps
+        horror
+        turn_base
+        strategy
+        massive_muti
+        simulation
+    }
+
     type Query{
         
         generateToken(id:String!):String
@@ -162,15 +191,18 @@ const typeDefs = gql`
   
     type Game{
         _id:ID!
-        game_name:String
+        name:String
         genres:[String]
         platforms:[String]
         popularity:String
-        logo:String
-        image(limit:Int):[String]
-        cover_image:String
+        logo:ImageInput
+        images(limit:Int):[String]
+        coverImage:ImageInput
     }
-   
+    type ImageInput{
+        imageUrl: String,
+        blur: String
+    }
     type ListMessage{
         userID:String!
         listmessage:[Message]
@@ -266,13 +298,21 @@ const typeDefs = gql`
     }
     input GameInput{
         _id:ID
-        game_name:String
-        genres:[String]
-        platforms:[String]
+        name:String! 
+        genres:[Genres]
+        platforms:[Platforms]
         popularity:String
         tag:[String]
-        logo:String
-        image:[String]
+        logo:imageInput
+        images:[
+            String
+        ]
+        coverImage:imageInput  
+
+    }
+    input imageInput{
+        imageUrl: String,
+        blur: String
     }
     input CreateChatInput{
         currentUser:ProfileInput!
@@ -283,7 +323,7 @@ const typeDefs = gql`
         """
             ***Create  a game with 'input'***
         """
-        createGame(input:GameInput):Game
+        createGame(input:GameInput):ResultCRUD
         """
             ***Create  a room chat with 'input'***
         """

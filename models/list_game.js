@@ -2,14 +2,26 @@ const mongoose=  require('mongoose');
 const DataLoader= require('dataloader');
 
 const list_game= mongoose.Schema({
-    game_name:String,
+    name:{
+      type:String,
+      unique: true,
+    },
     genres: [String],
     popularity: String,
     platforms:[String],
     tag:[String],
-    logo:String,
-    image:[String],
-    cover_image:String
+    logo: {
+      imageUrl: String,
+      //blur: String
+    },
+    images:[
+       String
+      //blur:String
+    ],
+    coverImage: {
+      imageUrl: String,
+      //blur: String
+    }
 })
 const ListGame= mongoose.model("ListGame",list_game);
 const getListGameLoader = () => new DataLoader((gameID) => {

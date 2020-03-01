@@ -12,11 +12,13 @@ const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
+const {Genres,Platforms} = require('./src/enum');
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
     AuthResponse, Message, MutationResponse, ResultTest,
-
+    //import enum type here
+    Genres,Platforms,
     Query: {
 
         generateToken: async (_, { id }) => {
@@ -209,7 +211,7 @@ module.exports = resolvers = {
                     /*for (const iterator of f) {
                         listGameLoader.load(iterator);
                     }*/
-                    
+
                     return f
 
                 });
@@ -217,14 +219,14 @@ module.exports = resolvers = {
 
         },
         getRandomGame: async (root) => {
-            return await ListGame.find({}, {}, { slice: { 'image': 1 } }).then((f) => {
+            return await ListGame.find({}, {}, { slice: { 'images': 1 } }).then((f) => {
                 var listImage = [];
                 //console.log(f)
                 return f;
             });
         },
         getGameByGenre: async (root, { type }, context) => {
-            console.log("TOken here", context.token);
+            console.log("Token here", context.token);
             return ListGame.find({ "genres": { $regex: type, $options: 'i' } }).then((v) => {
                 //console.log(v);
                 return v;
@@ -254,7 +256,19 @@ module.exports = resolvers = {
 
         async createGame(root, { input }) {
             return ListGame.create(input).then((value) => {
-                return value;
+                return {
+                    status: 201,
+                    "success": true,
+                    message: "Create game success!"
+                };
+            }).catch((err) => {
+                console.log(err);
+                
+                return {
+                    status: 201,
+                    "success": true,
+                    message: "Create game failed!"
+                }
             });
         }
         ,
@@ -443,19 +457,21 @@ module.exports = resolvers = {
         },*/
         deleteMessage: async (root, { currentUserID, friendID, messageID }) => {
             return ChatPrivate.findOneAndUpdate(
-                { $and: [{ "currentUser.id": currentUserID }, 
-                { $and: [{ "friend.id": friendID }] }] },
-                {$pull:{"messages":{_id:messageID}}},
-               { rawResult: true,new:true }
+                {
+                    $and: [{ "currentUser.id": currentUserID },
+                    { $and: [{ "friend.id": friendID }] }]
+                },
+                { $pull: { "messages": { _id: messageID } } },
+                { rawResult: true, new: true }
             ).then((v) => {
                 // error
-                if(v.value == null){
+                if (v.value == null) {
                     return { status: 401, "success": false, "message": "Delete fail..." }
                 }
-                else  return { status: 200, "success": true, "message": "Delete success!" }
+                else return { status: 200, "success": true, "message": "Delete success!" }
             }).catch((err) => {
                 console.log(err);
-                
+
                 return { status: 401, "success": false, "message": "Delete fail..." }
             });
         },
