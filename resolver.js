@@ -200,13 +200,13 @@ module.exports = resolvers = {
         async getListGame(root, { limit }, { dataloaders: { listGameLoader } }) {
             //return ListGame.create(input);
             if (limit == 1) {
-                return await ListGame.find({}, {}, { slice: { 'image': 1 } }).lean(true).then((f) => {
+                return await ListGame.find({}, {}, { slice: { 'images': 1 } }).lean(true).then((f) => {
                     //console.log(f);
                     return f;
                 });
             }
             if (limit == 0) {
-                return await ListGame.find({}, {}, { slice: { 'image': [1, 100] } }).lean(true).then((f) => {
+                return await ListGame.find({}, {}, { slice: { 'images': [1, 100] } }).lean(true).then((f) => {
                     //console.log(f);
                     /*for (const iterator of f) {
                         listGameLoader.load(iterator);
