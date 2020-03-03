@@ -34,6 +34,7 @@ const typeDefs = gql`
         strategy
         massive_muti
         simulation
+        battle_royle
     }
 
     type Query{
@@ -198,6 +199,7 @@ const typeDefs = gql`
         logo:ImageInput
         images(limit:Int):[String]
         coverImage:ImageInput
+        summary:String
     }
     type ImageInput{
         imageUrl: String,
@@ -307,7 +309,8 @@ const typeDefs = gql`
         images:[
             String
         ]
-        coverImage:imageInput  
+        coverImage:imageInput
+        summary:String
 
     }
     input imageInput{

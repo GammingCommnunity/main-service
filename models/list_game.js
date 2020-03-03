@@ -21,6 +21,9 @@ const list_game= mongoose.Schema({
     coverImage: {
       imageUrl: String,
       //blur: String
+    },
+    summary:{
+      type:String
     }
 })
 const ListGame= mongoose.model("ListGame",list_game);

@@ -24,7 +24,8 @@ const Enum={
         turn_base: "Turn-base",
         massive_muti: "Massive Multiplayer",
         strategy: "Strategy",
-        simulation: "Simulation"
+        simulation: "Simulation",
+        battle_royle:"Battle Royle"
     },
 }
 
