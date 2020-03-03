@@ -250,6 +250,9 @@ module.exports = resolvers = {
         },
         roomManage: async (_, { hostID }) => {
             return Room.aggregate([{ $match: { "hostID": hostID } }]);
+        },
+        getSummaryByGameID: async(_,{gameID})=>{
+            return ListGame.find({"_id":gameID}).lean();
         }
     },
     Mutation: {

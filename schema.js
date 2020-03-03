@@ -112,6 +112,7 @@ const typeDefs = gql`
             *** get room by hostID, specify hostID to find***
         """
         roomManage(hostID:String!):[Room]
+        getSummaryByGameID(gameID:String!):[Game]
     }
     interface Message{
         _id:ID
