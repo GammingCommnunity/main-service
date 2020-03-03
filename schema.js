@@ -201,6 +201,11 @@ const typeDefs = gql`
         images(limit:Int):[String]
         coverImage:ImageInput
         summary:String
+        video:VideoType
+    }
+    type VideoType{
+        trailer:String
+        gameplay:[String]
     }
     type ImageInput{
         imageUrl: String,

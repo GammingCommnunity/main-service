@@ -22,6 +22,12 @@ const list_game= mongoose.Schema({
       imageUrl: String,
       //blur: String
     },
+    video:{
+      trailer:{
+        type:String
+      },
+      gameplay:[String]
+    },
     summary:{
       type:String
     }
