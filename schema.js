@@ -17,6 +17,8 @@ const typeDefs = gql`
     }
     
     enum Genres{
+        zombies
+        co_op
         action
         advanture
         arcade
@@ -35,6 +37,8 @@ const typeDefs = gql`
         massive_muti
         simulation
         battle_royle
+        rts
+        rpg
     }
 
     type Query{
@@ -199,6 +203,7 @@ const typeDefs = gql`
         popularity:String
         logo:ImageInput
         images(limit:Int):[String]
+        banner:String
         coverImage:ImageInput
         summary:String
         video:VideoType
@@ -311,13 +316,19 @@ const typeDefs = gql`
         platforms:[Platforms]
         popularity:String
         tag:[String]
+        banner:String
         logo:imageInput
         images:[
             String
         ]
         coverImage:imageInput
         summary:String
+        video:VideoInput
 
+    }
+    input VideoInput{
+        trailer:String!,
+        gameplay:String
     }
     input imageInput{
         imageUrl: String,

@@ -8,6 +8,8 @@ const Enum={
         nitendo_switch: "Nintendo Switch"
     },
     Genres: {
+        zombies:"Zombies",
+        co_op:"Co-op",
         action: "Action",
         advanture: "Adventure",
         arcade: "Arcade",
@@ -25,7 +27,9 @@ const Enum={
         massive_muti: "Massive Multiplayer",
         strategy: "Strategy",
         simulation: "Simulation",
-        battle_royle:"Battle Royle"
+        battle_royle:"Battle Royle",
+        rpg:"RPG",
+        rts:"RTS"
     },
 }
 

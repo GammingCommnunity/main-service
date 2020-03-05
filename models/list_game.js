@@ -18,6 +18,9 @@ const list_game= mongoose.Schema({
        String
       //blur:String
     ],
+    banner:{
+      type:String,
+    },
     coverImage: {
       imageUrl: String,
       //blur: String
