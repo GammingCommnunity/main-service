@@ -7,6 +7,10 @@ const typeDefs = gql`
     union ResultTest= Room|Game  
     scalar Upload
     scalar Date
+    enum SortEnum{
+        DESC
+        ASC
+    }
     enum Platforms {
         windows
         xbox_one
@@ -117,7 +121,7 @@ const typeDefs = gql`
         """
         roomManage(hostID:String!):[Room]
         getSummaryByGameID(gameID:String!):[Game]
-        countRoomOnEachGame:[Game]
+        countRoomOnEachGame(sort:SortEnum!):[Game]
     }
     interface Message{
         _id:ID
@@ -209,7 +213,7 @@ const typeDefs = gql`
         summary:String
         video:VideoType
         background:String
-        count:Int
+        count(DESC:String):Int
     }
     type VideoType{
         trailer:String

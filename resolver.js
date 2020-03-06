@@ -13,13 +13,13 @@ const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
-const {Genres,Platforms} = require('./src/enum');
+const { Genres, Platforms } = require('./src/enum');
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
     AuthResponse, Message, MutationResponse, ResultTest,
     //import enum type here
-    Genres,Platforms,
+    Genres, Platforms,
     Query: {
 
         generateToken: async (_, { id }) => {
@@ -205,20 +205,20 @@ module.exports = resolvers = {
                     //var v =  listGameLoader.load(f);
                     //console.log(listGameLoader.load(f));
 
-                    const mapped= f.map(async (e) => {
+                    const mapped = f.map(async (e) => {
                         var url = "";
-                       return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
-                           url = val.background.url ;
-                           return ({ ...e, "background": url })
+                        return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
+                            url = val.background.url;
+                            return ({ ...e, "background": url })
                         });
-                    
+
                     })
                     return mapped
                 });
             }
             if (limit == 0) {
                 return await ListGame.find({}, {}, { slice: { 'images': [1, 100] } }).lean(true).then((f) => {
-                   
+
                     const mapped = f.map(async (e) => {
                         var url = "";
                         return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
@@ -265,18 +265,36 @@ module.exports = resolvers = {
         roomManage: async (_, { hostID }) => {
             return Room.aggregate([{ $match: { "hostID": hostID } }]);
         },
-        getSummaryByGameID: async(_,{gameID})=>{
-            return ListGame.find({"_id":gameID}).lean();
+        getSummaryByGameID: async (_, { gameID }) => {
+            return ListGame.find({ "_id": gameID }).lean();
         },
-        countRoomOnEachGame: async(_)=>{
-            return ListGame.find({}).lean().then((v)=>{
-                const mapped= v.map(async (e)=>{
-                    var count= await Room.countDocuments({ "game.gameID": e._id });
-                    var result= await RoomBackground.findOne({"gameID":e._id});
-                    return ({ ...e, "count": count, "background":result.background.url })
-                    
+        countRoomOnEachGame: async (_,{sort}) => {
+            return ListGame.find({}).select("name game").lean().then(async (v) => {
+                console.log(v);
+                
+                let mapped = v.map(async (e) => {
+                    var count = await Room.countDocuments({ "game.gameID": e._id });
+                    var result = await RoomBackground.findOne({ "gameID": e._id });
+                    return ({ ...e, "count": count, "background": result.background.url })
+
                 })
-                return mapped;
+                // convert from promise to fullfil
+                let values = await Promise.all(mapped.map(async (e) => {
+                    return e;
+                }));
+                
+                if(sort=='ASC'){
+                    values.sort((a, b) => {
+                        return b.count - a.count
+                    });
+                }
+                //descending
+                else if (sort == 'DESC') {
+                    values.sort((a, b) => {
+                        return a.count - b.count
+                    });
+                }
+                return values;
             });
         }
     },
@@ -291,7 +309,7 @@ module.exports = resolvers = {
                 };
             }).catch((err) => {
                 console.log(err);
-                
+
                 return {
                     status: 201,
                     "success": true,
@@ -332,7 +350,7 @@ module.exports = resolvers = {
             try {
                 /*let result = verify(context.token,process.env.SECRET_KEY, { algorithms: "HS512" });
                 console.log("asdasd",context);*/
-                
+
                 if (userID == userID) {
                     return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                         if (v.length > 0) {
@@ -362,7 +380,7 @@ module.exports = resolvers = {
                 else return { status: 400, "success": false, "message": "You have wrong certificate!" }
             } catch (error) {
                 console.log(error);
-                
+
                 return new AuthenticationError("Wrong token");
             }
         },
@@ -507,11 +525,11 @@ module.exports = resolvers = {
                 return { status: 401, "success": false, "message": "Delete fail..." }
             });
         },
-        createRoomBackground: async(_,{input})=>{
-            
-            return RoomBackground.create(input).then((v)=>{
+        createRoomBackground: async (_, { input }) => {
+
+            return RoomBackground.create(input).then((v) => {
                 return { status: 200, "success": true, "message": "Create success!" }
-            }).catch((err)=>{
+            }).catch((err) => {
                 return { status: 200, "success": false, "message": "Create fail!" }
             });
         },
