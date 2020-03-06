@@ -24,10 +24,10 @@ const server = new ApolloServer({
     context:({req})=>{
      
        const token =req.headers.token || null;
+      
        
        
-       return {token, 
-        dataloaders:{
+       return {token,dataloaders:{
             roomLoader: getRoomLoader(),
             listGameLoader:getListGameLoader()}};
        //console.log(process.env.SECRET_KEY);

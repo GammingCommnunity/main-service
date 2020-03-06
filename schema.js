@@ -117,6 +117,7 @@ const typeDefs = gql`
         """
         roomManage(hostID:String!):[Room]
         getSummaryByGameID(gameID:String!):[Game]
+        countRoomOnEachGame:[Game]
     }
     interface Message{
         _id:ID
@@ -201,18 +202,20 @@ const typeDefs = gql`
         genres:[String]
         platforms:[String]
         popularity:String
-        logo:ImageInput
+        logo:ImageType
         images(limit:Int):[String]
         banner:String
-        coverImage:ImageInput
+        coverImage:ImageType
         summary:String
         video:VideoType
+        background:String
+        count:Int
     }
     type VideoType{
         trailer:String
         gameplay:[String]
     }
-    type ImageInput{
+    type ImageType{
         imageUrl: String,
         blur: String
     }
@@ -338,7 +341,15 @@ const typeDefs = gql`
         currentUser:ProfileInput!
         friend:ProfileInput!
     }
-     
+    input RoomBackgroundInput{
+        name:String!,
+        gameID:String,
+        background:BackgroundInput
+    }
+    input BackgroundInput{
+        url:String,
+        blur:String
+    }
     type Mutation{
         """
             ***Create  a game with 'input'***
@@ -400,7 +411,7 @@ const typeDefs = gql`
             *** (No usage) ***
 
         """
-
+        createRoomBackground(input:RoomBackgroundInput):ResultCRUD
         upload(
             file: Upload!,
             userID:String,

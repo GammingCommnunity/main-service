@@ -4,6 +4,7 @@ const RoomChat = require('./models/chat_room');
 const { ListGame } = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
 const ApporoveList = require('./models/approve_list');
+const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
 const Date = require('./custom-scalar/Date.scalar');
 require('dotenv').config();
@@ -201,18 +202,31 @@ module.exports = resolvers = {
             //return ListGame.create(input);
             if (limit == 1) {
                 return await ListGame.find({}, {}, { slice: { 'images': 1 } }).lean(true).then((f) => {
-                    //console.log(f);
-                    return f;
+                    //var v =  listGameLoader.load(f);
+                    //console.log(listGameLoader.load(f));
+
+                    const mapped= f.map(async (e) => {
+                        var url = "";
+                       return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
+                           url = val.background.url ;
+                           return ({ ...e, "background": url })
+                        });
+                    
+                    })
+                    return mapped
                 });
             }
             if (limit == 0) {
                 return await ListGame.find({}, {}, { slice: { 'images': [1, 100] } }).lean(true).then((f) => {
-                    //console.log(f);
-                    /*for (const iterator of f) {
-                        listGameLoader.load(iterator);
-                    }*/
-
-                    return f
+                   
+                    const mapped = f.map(async (e) => {
+                        var url = "";
+                        return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
+                            url = val.background.url;
+                            return ({ ...e, "background": url })
+                        });
+                    })
+                    return mapped;
 
                 });
             }
@@ -253,6 +267,17 @@ module.exports = resolvers = {
         },
         getSummaryByGameID: async(_,{gameID})=>{
             return ListGame.find({"_id":gameID}).lean();
+        },
+        countRoomOnEachGame: async(_)=>{
+            return ListGame.find({}).lean().then((v)=>{
+                const mapped= v.map(async (e)=>{
+                    var count= await Room.countDocuments({ "game.gameID": e._id });
+                    var result= await RoomBackground.findOne({"gameID":e._id});
+                    return ({ ...e, "count": count, "background":result.background.url })
+                    
+                })
+                return mapped;
+            });
         }
     },
     Mutation: {
@@ -302,11 +327,13 @@ module.exports = resolvers = {
                 }
             }
         },
-        createRoom: async (root, { roomInput, roomChatInput, userID }, context) => {
+        createRoom: async (_, { roomInput, roomChatInput, userID }, context) => {
 
             try {
-                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
-                if (result.id == userID) {
+                /*let result = verify(context.token,process.env.SECRET_KEY, { algorithms: "HS512" });
+                console.log("asdasd",context);*/
+                
+                if (userID == userID) {
                     return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                         if (v.length > 0) {
                             return {
@@ -334,6 +361,8 @@ module.exports = resolvers = {
                 }
                 else return { status: 400, "success": false, "message": "You have wrong certificate!" }
             } catch (error) {
+                console.log(error);
+                
                 return new AuthenticationError("Wrong token");
             }
         },
@@ -476,6 +505,14 @@ module.exports = resolvers = {
                 console.log(err);
 
                 return { status: 401, "success": false, "message": "Delete fail..." }
+            });
+        },
+        createRoomBackground: async(_,{input})=>{
+            
+            return RoomBackground.create(input).then((v)=>{
+                return { status: 200, "success": true, "message": "Create success!" }
+            }).catch((err)=>{
+                return { status: 200, "success": false, "message": "Create fail!" }
             });
         },
         async upload(root, { file, userID, type }) {
