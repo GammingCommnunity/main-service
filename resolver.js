@@ -298,8 +298,12 @@ module.exports = resolvers = {
                 return values;
             });
         },
-        fetchNews :async()=>{
-            return News.find();
+        fetchNews: async (_, { page, limit})=>{
+            return News.paginate({}, { page: page, limit: limit, }).then((v)=>{
+                console.log(v);
+                
+                return v.docs;
+            });
         }
 
     },
