@@ -14,6 +14,7 @@ const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
 const { Genres, Platforms } = require('./src/enum');
+const News= require('./models/news');
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
@@ -296,7 +297,11 @@ module.exports = resolvers = {
                 }
                 return values;
             });
+        },
+        fetchNews :async()=>{
+            return News.find();
         }
+
     },
     Mutation: {
 
