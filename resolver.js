@@ -8,13 +8,13 @@ const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
 const Date = require('./custom-scalar/Date.scalar');
 require('dotenv').config();
-const path = require('path');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
 const { Genres, Platforms } = require('./src/enum');
 const News= require('./models/news');
+
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
@@ -209,8 +209,14 @@ module.exports = resolvers = {
                     const mapped = f.map(async (e) => {
                         var url = "";
                         return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
-                            url = val.background.url;
-                            return ({ ...e, "background": url })
+                           
+                            try {
+                                url = val.background.url;
+                                return ({ ...e, "background": url })
+                            } catch (error) {
+                                return ({ ...e, "background": process.env.default_banner })
+                            }
+                            
                         });
 
                     })

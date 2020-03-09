@@ -215,6 +215,7 @@ const typeDefs = gql`
         popularity:String
         logo:ImageType
         images(limit:Int):[String]
+        tag:[String]
         banner:String
         coverImage:ImageType
         summary:String
