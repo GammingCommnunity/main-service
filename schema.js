@@ -122,7 +122,7 @@ const typeDefs = gql`
         roomManage(hostID:String!):[Room]
         getSummaryByGameID(gameID:String!):[Game]
         countRoomOnEachGame(sort:SortEnum!):[Game]
-        fetchNews(page:Int,limit:Int):[News]
+        fetchNews(name:String!,page:Int,limit:Int):[News]
     }
     interface Message{
         _id:ID
@@ -135,6 +135,7 @@ const typeDefs = gql`
         article_image:String,
         release_date:String
     }
+    
     type Profile{
         id:String,
         profile_url:String

@@ -13,7 +13,7 @@ const { sign, verify } = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
 const { Genres, Platforms } = require('./src/enum');
-const News= require('./models/news');
+const { GamesRadars, PCGamer } = require('./models/News/News');
 
 module.exports = resolvers = {
     Upload: GraphQLUpload,
@@ -209,14 +209,14 @@ module.exports = resolvers = {
                     const mapped = f.map(async (e) => {
                         var url = "";
                         return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
-                           
+
                             try {
                                 url = val.background.url;
                                 return ({ ...e, "background": url })
                             } catch (error) {
                                 return ({ ...e, "background": process.env.default_banner })
                             }
-                            
+
                         });
 
                     })
@@ -275,10 +275,10 @@ module.exports = resolvers = {
         getSummaryByGameID: async (_, { gameID }) => {
             return ListGame.find({ "_id": gameID }).lean();
         },
-        countRoomOnEachGame: async (_,{sort}) => {
+        countRoomOnEachGame: async (_, { sort }) => {
             return ListGame.find({}).select("name game").lean().then(async (v) => {
                 console.log(v);
-                
+
                 let mapped = v.map(async (e) => {
                     var count = await Room.countDocuments({ "game.gameID": e._id });
                     var result = await RoomBackground.findOne({ "gameID": e._id });
@@ -289,8 +289,8 @@ module.exports = resolvers = {
                 let values = await Promise.all(mapped.map(async (e) => {
                     return e;
                 }));
-                
-                if(sort=='ASC'){
+
+                if (sort == 'ASC') {
                     values.sort((a, b) => {
                         return b.count - a.count
                     });
@@ -304,12 +304,20 @@ module.exports = resolvers = {
                 return values;
             });
         },
-        fetchNews: async (_, { page, limit})=>{
-            return News.paginate({}, { page: page, limit: limit, }).then((v)=>{
-                console.log(v);
-                
-                return v.docs;
-            });
+        fetchNews: async (_, { name, page, limit }) => {
+
+            switch (name) {
+                case 'pcgamer':
+                    return PCGamer.paginate({}, { page: page, limit: limit }).then((v) => {
+                        return v.docs
+                    })
+                    break;
+                case 'gameradar':
+                    return GamesRadars.paginate({}, { page: page, limit: limit }).then((v) => v.docs)
+                    break;
+                default:
+                    break;
+            }
         }
 
     },
