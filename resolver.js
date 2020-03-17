@@ -308,12 +308,12 @@ module.exports = resolvers = {
 
             switch (name) {
                 case 'pcgamer':
-                    return PCGamer.paginate({}, { page: page, limit: limit }).then((v) => {
+                    return PCGamer.paginate({}, { page: page, limit: limit, lean: true, leanWithId: true, sort: { _id: -1 }}).then((v) => {
                         return v.docs
                     })
                     break;
                 case 'gameradar':
-                    return GamesRadars.paginate({}, { page: page, limit: limit }).then((v) => v.docs)
+                    return GamesRadars.paginate({}, { page: page, limit: limit, lean: true, leanWithId: true, sort: { _id: -1 } }).then((v) => v.docs)
                     break;
                 default:
                     break;
