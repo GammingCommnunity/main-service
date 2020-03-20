@@ -353,6 +353,7 @@ const typeDefs = gql`
     input CreateChatInput{
         currentUser:ProfileInput!
         friend:ProfileInput!
+        messages:MessageInput
     }
     input RoomBackgroundInput{
         name:String!,
