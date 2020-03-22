@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const RoomBackground= mongoose.Schema({
-
     name:{
         type: String,
         unique:true

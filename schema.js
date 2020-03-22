@@ -1,4 +1,4 @@
-const { gql,AuthenticationError } = require('apollo-server');
+const { gql, AuthenticationError } = require('apollo-server');
 const { makeExecutableSchema } = require('apollo-server-express');
 const Resolvers = require('./resolver');
 
@@ -44,7 +44,31 @@ const typeDefs = gql`
         rts
         rpg
     }
-
+    type userSubscription{
+        userID:String,
+        joinTime:Date,
+        isApprove:Boolean
+    }
+    type messageSubscription{
+        message:String
+        senderID:String
+        sendDate:Date
+    }
+    type groupSubcription{
+        groupID:String
+        senderID:String
+        message:String
+        sendDate:Date
+    
+    }
+    type Subscription{
+        onJoinRoom: userSubscription
+        recieveNewMessage:messageSubscription
+        """
+        *** only listen to new message from groupID
+        """
+        groupNewMessage(groupID:String):groupSubcription
+    }
     type Query{
         
         generateToken(id:String!):String
@@ -73,14 +97,9 @@ const typeDefs = gql`
         findRoomByName(room_name:String!):[Room]
 
         ## (Deperated) joinRoomChat(roomID:String,userID:String,Info:Info):ResultCRUD
-        """ 
-        ***Add member to room (require token)***
-        """
-        addMember(id_room:String!,id_user:String!):ResultCRUD
+       
         
-        chatGroup(id_room:String!,chat_message:MessageInput):Result
         
-        getAllMessage(id_room:String!):RoomChat
         """ 
         ***Get list chat private message from userID*** 
         """
@@ -123,6 +142,7 @@ const typeDefs = gql`
         getSummaryByGameID(gameID:String!):[Game]
         countRoomOnEachGame(sort:SortEnum!):[Game]
         fetchNews(name:String!,page:Int,limit:Int):[News]
+        getRoomMessage(hostID:String!,roomID:String!):RoomChat
     }
     interface Message{
         _id:ID
@@ -144,7 +164,6 @@ const typeDefs = gql`
         currentUser:Profile
         friend:Profile
         messages:[
-            
             PrivateChatMessages
         ]
     }
@@ -155,6 +174,7 @@ const typeDefs = gql`
         text:String,
         createAt:Date
     }
+
     type pendingMessages{
         userID:String
         messages:[
@@ -181,7 +201,8 @@ const typeDefs = gql`
             ApproveList. ***
     """
     input Info{
-        userID:String!,
+        hostID:String!
+        userID:String!
         roomID:String!
     }
     type File {
@@ -197,7 +218,6 @@ const typeDefs = gql`
     type Room implements AuthResponse{
         _id:ID!
         roomName:String!
-        idUser:String!
         hostID:String
         isPrivate:Boolean
         description:String
@@ -206,6 +226,7 @@ const typeDefs = gql`
         maxOfMember:Int
         createAt:Date
         status:String!
+        code:String!
     }
   
     type Game{
@@ -224,6 +245,7 @@ const typeDefs = gql`
         background:String
         count(DESC:String):Int
     }
+
     type VideoType{
         trailer:String
         gameplay:[String]
@@ -244,6 +266,7 @@ const typeDefs = gql`
         message: String!
     
     }
+
     type UploadImage implements MutationResponse{
         code: String!
         success: Boolean!
@@ -255,6 +278,7 @@ const typeDefs = gql`
         success: Boolean!
         message: String!
     }
+
     interface AuthResponse{
         status:String!
     }
@@ -264,6 +288,7 @@ const typeDefs = gql`
       status:String
       result:Boolean
     }
+
     type ResultCRUD implements MutationResponse{
         status:String
         success:Boolean!
@@ -305,10 +330,11 @@ const typeDefs = gql`
     input GameInfo{
         gameID:String!
         gameName:String!
+        platform:Platforms
     }
    
     input MessageInput{
-        user:ProfileInput
+        userID:String
         text:String!
         createAt:Date
     }
@@ -364,6 +390,8 @@ const typeDefs = gql`
         url:String,
         blur:String
     }
+    
+    
     type Mutation{
         """
             ***Create  a game with 'input'***
@@ -380,6 +408,13 @@ const typeDefs = gql`
             userID:String,
             roomInput: RoomInput,
             roomChatInput:RoomChatInput):ResultCRUD
+
+        """ 
+        ***Add member to room (require token)***
+        """
+        addMember(roomID:String!,userID:String!):ResultCRUD
+
+        
         """
             ***Remove  a room,
             MUST specify roomID.
@@ -397,10 +432,13 @@ const typeDefs = gql`
             *** Chat with someone privately***
 
         """
+        
         chatPrivate(
             currentUserID:String,
             friendID:String,
             input:MessageInput):ResultCRUD
+            
+        chatRoom(roomID:String!,messages:MessageInput):ResultCRUD
         """
             *** (WIP) ***
 
@@ -418,6 +456,7 @@ const typeDefs = gql`
             roomID:String!,
             currentUserID:String!,
             info:Info!):ResultCRUD
+        
         createPrivateChat(input:CreateChatInput):ResultCRUD
 
         deleteMessage(currentUserID:String!,friendID:String!,messageID:String!):ResultCRUD
@@ -433,12 +472,11 @@ const typeDefs = gql`
     }
 `;
 
-
 const schema = makeExecutableSchema({
     typeDefs: typeDefs,
 
     resolvers:
         Resolvers,
-    
+
 });
 module.exports = schema;

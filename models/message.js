@@ -1,5 +1,4 @@
 const mongoose= require('mongoose')
-const User= require('./user')
 const mongoosePaginate = require('mongoose-paginate-v2');
 
 const message= mongoose.Schema({

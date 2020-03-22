@@ -12,7 +12,8 @@ const Rooms = mongoose.Schema({
   },
   game: {
     gameID: String,
-    gameName: String
+    gameName: String,
+    platform:String
   },
   description: {
     type:String,

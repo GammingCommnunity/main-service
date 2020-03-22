@@ -1,26 +1,45 @@
-
+require('dotenv').config();
+var cloudinary = require('cloudinary').v2;
 const { Room } = require('./models/room')
 const RoomChat = require('./models/chat_room');
 const { ListGame } = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
-const ApporoveList = require('./models/approve_list');
+const ApproveList = require('./models/approve_list');
 const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
-const Date = require('./custom-scalar/Date.scalar');
-require('dotenv').config();
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
-var cloudinary = require('cloudinary').v2;
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
 const { Genres, Platforms } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
-
+const {onError,onSuccess} = require('./src/error_handle');
+const {PubSub,PubSubEngine,withFilter} = require('apollo-server');
+const pubsub = new PubSub();
+const JOIN_ROOM = 'JOIN_ROOM';
+const RECIEVE_MESSAGE= 'RECIEVE_MESSAGE';
+const GROUP_MESSAGE= 'GROUP_MESSAGE';
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
     AuthResponse, Message, MutationResponse, ResultTest,
     //import enum type here
     Genres, Platforms,
+
+    Subscription:{
+        onJoinRoom:{
+            subscribe: ()  => pubsub.asyncIterator([JOIN_ROOM])
+        },
+        recieveNewMessage:{
+            subscribe: () => pubsub.asyncIterator([RECIEVE_MESSAGE])
+        },
+        groupNewMessage:{
+            subscribe: withFilter(
+                () => pubsub.asyncIterator([GROUP_MESSAGE]),(payload,variable)=>{
+                    return payload.groupNewMessage.groupID === variable.groupID
+                }
+            )
+        }
+    },
     Query: {
 
         generateToken: async (_, { id }) => {
@@ -73,8 +92,6 @@ module.exports = resolvers = {
         async getAllRoomChat() {
             return await RoomChat.find();
         },
-
-
 
         async RmvMbFrRoom(root, { type, userID, roomID }) {
             if (type == "all") {
@@ -160,41 +177,12 @@ module.exports = resolvers = {
 
 
         },*/
-        async addMember(root, { roomID, userID }) {
-            return Room.findByIdAndUpdate(roomID, { $push: { member: userID } }, { upsert: true, new: true }).then(result => {
-                console.log(result);
-                if (value) {
-                    return {
-                        status: 201,
-                        "success": true,
-                        message: "Add success!"
-                    }
-                }
-            }).catch(err => {
-                return {
-                    status: 401,
-                    "success": false,
-                    message: "Add failded!"
-                }
-            })
-
-        },
-        //them tin nhan vao group chat 
-        async chatGroup(root, { id_room, chat_message }) {
-
-            return RoomChat.findOneAndUpdate({ "id_room": id_room }, { $push: { messages: chat_message } }).then(v => {
-                return v;
-                //console.log(v.messages[0].time);
-            })
-            /*return RoomChat.findByIdAndUpdate(id_room,{$push:{messages:chat_message}},{upsert:true,new:true}).then(result=>{
-                console.log(result);
-                return {"data":result,"result":true}
-            }).catch(err=>{return {"data":err,"result":false}});*/
-        },
+        
+        
         // lay tat ca tin nhan trog mot phong dua vao id_room
-        async getAllMessage(root, { id_room, sl }) {
+        async getRoomMessage(root, { hostID ,roomID, sl }) {
 
-            return RoomChat.findOne({ "id_room": id_room }).then(result => {
+            return RoomChat.findOne({ "roomID": roomID }).then(result => {
                 return result
             })
         },
@@ -255,14 +243,14 @@ module.exports = resolvers = {
         },
         // show ra nhung phong host ma co thanh vien cho 
         approveList_Host: async (root, { hostID }, context) => {
-            return ApporoveList.aggregate([{ $match: { "hostID": hostID } }]).then((v) => {
+            return ApproveList.aggregate([{ $match: { "hostID": hostID } }]).then((v) => {
                 return v;
             });
 
         },
         // show ra nhung phong user dang cho duoc duyet 
         approveList_User: async (root, { userID }, context) => {
-            return ApporoveList.aggregate([{ $match: { "userID": userID } }]).then((v) => {
+            return ApproveList.aggregate([{ $match: { "userID": userID } }]).then((v) => {
                 return v;
             })
         },
@@ -325,19 +313,11 @@ module.exports = resolvers = {
 
         async createGame(root, { input }) {
             return ListGame.create(input).then((value) => {
-                return {
-                    status: 201,
-                    "success": true,
-                    message: "Create game success!"
-                };
+                return onSuccess("Create game success!")
             }).catch((err) => {
                 console.log(err);
 
-                return {
-                    status: 201,
-                    "success": true,
-                    message: "Create game failed!"
-                }
+                return onError('fail', "Create game failed!")
             });
         }
         ,
@@ -346,26 +326,15 @@ module.exports = resolvers = {
                 let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
                 if (result.id == userID) {
                     return Room.deleteOne({ "_id": roomID }).then((v) => {
-                        return {
-                            status: 201,
-                            "success": true,
-                            message: "Remove success!"
-                        }
+                        return onSuccess("Remove success!");
+
                     }).catch((e) => {
-                        return {
-                            status: 201,
-                            "success": true,
-                            message: "Remove failed!"
-                        }
+                        return onError('fail', "Remove failed!")
                     });
                 }
             }
             catch (e) {
-                return {
-                    status: 201,
-                    "success": true,
-                    message: new AuthenticationError("Wrong token")
-                }
+                return onError('unAuth', new AuthenticationError("Wrong token"))
             }
         },
         createRoom: async (_, { roomInput, roomChatInput, userID }, context) => {
@@ -377,30 +346,22 @@ module.exports = resolvers = {
                 if (userID == userID) {
                     return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                         if (v.length > 0) {
-                            return {
-                                status: 400,
-                                "success": false,
-                                message: "This name already taken"
-                            }
+                            return onError('fail', "This name already taken")
                         }
                         else return Room.create(roomInput).then(async (value) => {
                             return RoomChat.create(roomChatInput).then(async (v) => {
                                 return RoomChat.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
-                                    return {
-                                        status: 201,
-                                        "success": true,
-                                        message: "Create success!"
-                                    }
+                                    return onSuccess("Create success!")
                                 })
 
                             })
                         }).catch(err => {
-                            return { status: 400, "success": false, "message": "Create failed!" }
+                            return onError("Create failed!")
                         })
                     })
 
                 }
-                else return { status: 400, "success": false, "message": "You have wrong certificate!" }
+                else return onError('unAuth', "You have wrong certificate!")
             } catch (error) {
                 console.log(error);
 
@@ -422,24 +383,28 @@ module.exports = resolvers = {
                 console.log(v.length);
 
                 if (v.length < 1) {
-                    return ApporoveList.find({ "roomID": roomID }).then((v) => {
+                    return ApproveList.find({ "roomID": roomID }).then((v) => {
                         console.log(v.length);
 
-                        if (v.length > 0) {
-                            return {
-                                "message": "You has been joined room, choose another room",
-                                "status": 401,
-                                "result": false
-                            }
+                        if (v.length < 0) {
+                            return onError('fail', "You has been joined room, choose another room")
                         }
-                        else return ApporoveList.create(info).then((v) => {
-                            return { "message": "Waiting for apporove", "status": 200, "result": true };;
+                        else return ApproveList.create(info).then((v) => {
+                                                        
+                            const newComer= {
+                                "userID": v.userID,
+                                "joinTime": v.joinTime,
+                                "isApprove":false
+                            }
+                            pubsub.publish([JOIN_ROOM], { onJoinRoom:newComer})
+
+                            return onSuccess("Waiting for apporove");;
 
                         })
                     })
                 }
                 else {
-                    return { "message": "You are host", "status": 401, "result": false };
+                    return onError('fail', "You are host");
                 }
 
             })
@@ -464,34 +429,65 @@ module.exports = resolvers = {
                             }
                         },
                         { upsert: true, 'new': true }).then(res => {
-                            return { status: 200, "success": true, "message": "Update success!" }
+                            return onSuccess("Update success!")
                         }).catch(err => {
 
-                            return { status: 401, "success": false, "message": "Somethings wrong during update..." }
+                            return onError('fail', "Somethings wrong during update...")
                         })
                 }
             } catch (error) {
-                return {
-                    status: 401, "success": false, "message": "You have wrong certificate!"
-                }
+                return onError('unAuth', "You have wrong certificate!")
             }
 
         },
-        /*async chatGlobal({ name, input }) {
-            GlobalRoom.findOneAndUpdate({ room_name: name }, { $push: { message: input } }, { upsert: true, rawResult: true }, (err, doc) => {
-                console.log(doc.ok);
-            })
-        },*/
-        // id_user: id from host message, id_friends
 
+        // id_user: id from host message, id_friends
+        async addMember(root, { roomID, userID }) {
+            return Room.findByIdAndUpdate(roomID, { $push: { member: userID } }, { upsert: true, new: true }).then(result => {
+                console.log(result);
+                if (value) {
+                    return onSuccess("Add success!")
+
+                }
+            }).catch(err => {
+                return onError("fail", "Add failded!")
+            })
+
+        },
+        //them tin nhan vao group chat 
+        async chatRoom(root, { roomID, messages }) {
+
+            return RoomChat.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
+                const now = new Date().toISOString();
+                const messges= {
+                    "groupID": roomID,
+                    "senderID": messages.userID,
+                    "message":messages.text,
+                    "sendDate": now
+                }
+                pubsub.publish(GROUP_MESSAGE, {
+                    groupNewMessage: messges
+                });
+                return onSuccess("Chat OK");
+                //console.log(v.messages[0].time);
+            }).catch((err)=>{
+                console.log(err);
+                
+                return onError('fail',"Chat failed!")
+            })
+            /*return RoomChat.findByIdAndUpdate(id_room,{$push:{messages:chat_message}},{upsert:true,new:true}).then(result=>{
+                console.log(result);
+                return {"data":result,"result":true}
+            }).catch(err=>{return {"data":err,"result":false}});*/
+        },
         async chatPrivate(root, { currentUserID, friendID, input }) {
-            //condition 1: currentID is the host.
+            //condition 1: sender is current User
             return ChatPrivate.findOneAndUpdate(
                 { $and: [{ "currentUser.id": currentUserID }, { $and: [{ "friend.id": friendID }] }] }, { $push: { messages: input } }
             ).then(async (v) => {
 
                 console.log("Here" + v);
-                // condition 2: currentID is the guest.
+            // condition 2: sender is guest.
                 if (v == null) {
                     return ChatPrivate.findOneAndUpdate(
                         { $and: [{ "friend.id": currentUserID }, { $and: [{ "currentUser.id": friendID }] }] }, { $push: { messages: input } }
@@ -499,30 +495,41 @@ module.exports = resolvers = {
                         .then(async (value) => {
                             // mean conversation is not avaiable... notify user to craete new 
                             if (value == null) {
-                                return { status: 401, "success": false, "message": "Conversation is not avaialbe !" }
+                                return onError('fail', "Conversation is not avaialbe !")
                             }
                             // console.log(value);
 
-                            else return { status: 200, "success": true, "message": "Add messages success!" }
+                            else  {
+                                const now = new Date().toISOString();
+                                const newMessage = {
+                                    message: input.text,
+                                    senderID: friendID,
+                                    sendDate: now,
+                                }
+                                pubsub.publish(RECIEVE_MESSAGE,{
+                                    recieveNewMessage: newMessage
+                                })
+                                return onSuccess("Add messages success!")
+                            }
 
                         }).catch((err) => {
-                            console.log("err");
+                            console.log(err);
                         })
                 }
-                else return { status: 200, "success": true, "message": "Add messages success!" }
+                else return onSuccess("Add messages success!" )
 
             }).catch(async (err) => {
 
-                return { status: 401, "success": false, "message": "Add messages failed!" }
+                return onError('fail', "Add messages failed!")
 
             });
         },
 
         async createPrivateChat(root, { input }) {
             return ChatPrivate.create(input).then((v) => {
-                return { status: 200, "success": true, "message": "Create success!" }
+                return onSuccess("Create success!")
             }).catch((v) => {
-                return { status: 401, "success": false, "message": "Create fail..." }
+                return onError('fail', "Create fail..." )
             });
         },
         /*async createChatGlobal(root, { input }) {
@@ -562,7 +569,7 @@ module.exports = resolvers = {
     },
 
 }
-const processUpload = async (file, userID) => {
+/*const processUpload = async (file, userID) => {
     const { filename, mimetype, createReadStream } = await file;
     var stream = createReadStream();
     let resultUrl = '';
@@ -592,5 +599,5 @@ const processUpload = async (file, userID) => {
     }
     await cloudinaryUpload({ stream });
     return { "code": "200", "success": true, message: "Upload success", "image_url": resultUrl };
-}
+}*/
 

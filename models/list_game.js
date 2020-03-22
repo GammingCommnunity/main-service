@@ -40,17 +40,11 @@ const list_game = mongoose.Schema({
 const ListGame = mongoose.model("ListGame", list_game);
 const getListGameLoader = () => new DataLoader(async (listGame) => {
   
-  
-  
-
   /*return RoomBackground.findOne({"gameID":gameID}).then((v)=>{
     return v.background.url
     
   })*/
   //return ListGame.find({ _id: { $in: gameID }});
 
-}
-
-
-)
+})
 module.exports = { ListGame, getListGameLoader };
