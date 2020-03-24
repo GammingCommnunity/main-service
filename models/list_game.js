@@ -4,7 +4,7 @@ const RoomBackground = require('./room_background');
 const list_game = mongoose.Schema({
   name: {
     type: String,
-    unique: true,
+    unique: true
   },
   genres: [String],
   popularity: String,
@@ -47,4 +47,6 @@ const getListGameLoader = () => new DataLoader(async (listGame) => {
   //return ListGame.find({ _id: { $in: gameID }});
 
 })
+list_game.index({name:"text"})
+
 module.exports = { ListGame, getListGameLoader };

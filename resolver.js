@@ -12,12 +12,12 @@ const { sign, verify } = require('jsonwebtoken');
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
 const { Genres, Platforms } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
-const {onError,onSuccess} = require('./src/error_handle');
-const {PubSub,PubSubEngine,withFilter} = require('apollo-server');
+const { onError, onSuccess } = require('./src/error_handle');
+const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const pubsub = new PubSub();
 const JOIN_ROOM = 'JOIN_ROOM';
-const RECIEVE_MESSAGE= 'RECIEVE_MESSAGE';
-const GROUP_MESSAGE= 'GROUP_MESSAGE';
+const RECIEVE_MESSAGE = 'RECIEVE_MESSAGE';
+const GROUP_MESSAGE = 'GROUP_MESSAGE';
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
@@ -25,16 +25,16 @@ module.exports = resolvers = {
     //import enum type here
     Genres, Platforms,
 
-    Subscription:{
-        onJoinRoom:{
-            subscribe: ()  => pubsub.asyncIterator([JOIN_ROOM])
+    Subscription: {
+        onJoinRoom: {
+            subscribe: () => pubsub.asyncIterator([JOIN_ROOM])
         },
-        recieveNewMessage:{
+        recieveNewMessage: {
             subscribe: () => pubsub.asyncIterator([RECIEVE_MESSAGE])
         },
-        groupNewMessage:{
+        groupNewMessage: {
             subscribe: withFilter(
-                () => pubsub.asyncIterator([GROUP_MESSAGE]),(payload,variable)=>{
+                () => pubsub.asyncIterator([GROUP_MESSAGE]), (payload, variable) => {
                     return payload.groupNewMessage.groupID === variable.groupID
                 }
             )
@@ -177,10 +177,10 @@ module.exports = resolvers = {
 
 
         },*/
-        
-        
+
+
         // lay tat ca tin nhan trog mot phong dua vao id_room
-        async getRoomMessage(root, { hostID ,roomID, sl }) {
+        async getRoomMessage(root, { hostID, roomID, sl }) {
 
             return RoomChat.findOne({ "roomID": roomID }).then(result => {
                 return result
@@ -296,7 +296,7 @@ module.exports = resolvers = {
 
             switch (name) {
                 case 'pcgamer':
-                    return PCGamer.paginate({}, { page: page, limit: limit, lean: true, leanWithId: true, sort: { _id: -1 }}).then((v) => {
+                    return PCGamer.paginate({}, { page: page, limit: limit, lean: true, leanWithId: true, sort: { _id: -1 } }).then((v) => {
                         return v.docs
                     })
                     break;
@@ -306,6 +306,17 @@ module.exports = resolvers = {
                 default:
                     break;
             }
+        },
+        searchGame: async (_, { name }) => {
+            let regex = new RegExp(name,'i');
+            return ListGame.findOne({$text:{$search:name}}).then((v)=>{
+                console.log(v);
+                
+                return v;
+            }).catch((err)=>{
+                console.log(err);
+                
+            })
         }
 
     },
@@ -390,13 +401,13 @@ module.exports = resolvers = {
                             return onError('fail', "You has been joined room, choose another room")
                         }
                         else return ApproveList.create(info).then((v) => {
-                                                        
-                            const newComer= {
+
+                            const newComer = {
                                 "userID": v.userID,
                                 "joinTime": v.joinTime,
-                                "isApprove":false
+                                "isApprove": false
                             }
-                            pubsub.publish([JOIN_ROOM], { onJoinRoom:newComer})
+                            pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
 
                             return onSuccess("Waiting for apporove");;
 
@@ -459,10 +470,10 @@ module.exports = resolvers = {
 
             return RoomChat.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
                 const now = new Date().toISOString();
-                const messges= {
+                const messges = {
                     "groupID": roomID,
                     "senderID": messages.userID,
-                    "message":messages.text,
+                    "message": messages.text,
                     "sendDate": now
                 }
                 pubsub.publish(GROUP_MESSAGE, {
@@ -470,10 +481,10 @@ module.exports = resolvers = {
                 });
                 return onSuccess("Chat OK");
                 //console.log(v.messages[0].time);
-            }).catch((err)=>{
+            }).catch((err) => {
                 console.log(err);
-                
-                return onError('fail',"Chat failed!")
+
+                return onError('fail', "Chat failed!")
             })
             /*return RoomChat.findByIdAndUpdate(id_room,{$push:{messages:chat_message}},{upsert:true,new:true}).then(result=>{
                 console.log(result);
@@ -487,7 +498,7 @@ module.exports = resolvers = {
             ).then(async (v) => {
 
                 console.log("Here" + v);
-            // condition 2: sender is guest.
+                // condition 2: sender is guest.
                 if (v == null) {
                     return ChatPrivate.findOneAndUpdate(
                         { $and: [{ "friend.id": currentUserID }, { $and: [{ "currentUser.id": friendID }] }] }, { $push: { messages: input } }
@@ -499,14 +510,14 @@ module.exports = resolvers = {
                             }
                             // console.log(value);
 
-                            else  {
+                            else {
                                 const now = new Date().toISOString();
                                 const newMessage = {
                                     message: input.text,
                                     senderID: friendID,
                                     sendDate: now,
                                 }
-                                pubsub.publish(RECIEVE_MESSAGE,{
+                                pubsub.publish(RECIEVE_MESSAGE, {
                                     recieveNewMessage: newMessage
                                 })
                                 return onSuccess("Add messages success!")
@@ -516,7 +527,7 @@ module.exports = resolvers = {
                             console.log(err);
                         })
                 }
-                else return onSuccess("Add messages success!" )
+                else return onSuccess("Add messages success!")
 
             }).catch(async (err) => {
 
@@ -529,7 +540,7 @@ module.exports = resolvers = {
             return ChatPrivate.create(input).then((v) => {
                 return onSuccess("Create success!")
             }).catch((v) => {
-                return onError('fail', "Create fail..." )
+                return onError('fail', "Create fail...")
             });
         },
         /*async createChatGlobal(root, { input }) {
