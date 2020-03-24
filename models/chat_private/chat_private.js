@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 const ChatPrivate = mongoose.Schema({
+    _id:String,
     currentUser: {
         id:String,
         profile_url:String
@@ -11,7 +12,6 @@ const ChatPrivate = mongoose.Schema({
     },
     messages:[
         {
-            
             user: {
                 id: String,
                 profile_url: String
