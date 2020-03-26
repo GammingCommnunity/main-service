@@ -1,18 +1,21 @@
-const { ApolloServer, AuthenticationError } = require('apollo-server');
+const { ApolloServer, AuthenticationError } = require('apollo-server-express');
 const { MemcachedCache } = require('apollo-server-cache-memcached')
 const mongoose = require('mongoose');
 const { execute, subscribe } = require ('graphql');
 const Schema = require('./schema');
 const { createServer } =require ('http');
-
+const express= require('express');
+const  checkSession = require('./middleware/checkSession');
 require('dotenv').config()
 require('os').tmpdir();
 const { SubscriptionServer } = require ('subscriptions-transport-ws');
 const buildDataloaders = require('./src/dataloader');
 const { Room, getRoomLoader } = require('./models/room');
 const { ListGame, getListGameLoader } = require('./models/list_game');
-const server = new ApolloServer({
 
+
+const server = new ApolloServer({
+    
     cors: true,
     schema: Schema,
     playground: true,
@@ -70,10 +73,14 @@ const server = new ApolloServer({
 //         path: '/graphql',
 //     },
 // );
+const port = process.env.PORT || 4000;
+const app = express();
+const path= '/graphql';
+app.use(path,checkSession);
+server.applyMiddleware({ app, path})
+app.listen(port,() => {
 
-server.listen().then(({ url }) => {
-
-    console.log(`🚀  Server ready at ${url}`);
+    console.log(`🚀  Server ready at ${port}`);
     mongoose.Promise = global.Promise;
     mongoose.set('useFindAndModify', false);
     mongoose.set('debug', true);
