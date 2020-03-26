@@ -127,12 +127,12 @@ module.exports = resolvers = {
 
             return Room.find({ "roomName": { '$regex': room_name, $options: 'i' } });
         },
-        async getRoomCreateByUser(root, { idUser, name }) {
-            return Room.aggregate([{ $match: { "host_name.username": name } }], (err, res) => {
-
-            })
+        async getRoomCreateByUser(root, { userID }) {
+            return Room.aggregate([{ $match: { "hostID": userID } }]);
         },
-
+        async getRoomJoin(_,{userID}) {
+            return Room.find({ "member": { "$in": [userID]}});
+        },
         /* async joinRoomChat(root, { id_room, id_user }) {
              return RoomChat.findOneAndUpdate({ "id_room": id_room }, { $push: { member: v } }, { upsert: true, new: true }).then(value => {
                  console.log(value)

@@ -90,7 +90,7 @@ const typeDefs = gql`
         """
         ***Get room which created by user***    
         """
-        getRoomCreateByUser(UserID:String):[Room]
+        getRoomCreateByUser(userID:String):[Room]
         """
         ***Find room by name***
         """
@@ -144,6 +144,7 @@ const typeDefs = gql`
         fetchNews(name:String!,page:Int,limit:Int):[News]
         getRoomMessage(hostID:String!,roomID:String!):RoomChat
         searchGame(name:String):Game
+        getRoomJoin(userID:String):[Room]
     }
     interface Message{
         _id:ID
@@ -162,6 +163,7 @@ const typeDefs = gql`
         profile_url:String
     }
     type PrivateChat{
+        _id:ID
         currentUser:Profile
         friend:Profile
         messages:[
