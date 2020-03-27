@@ -2,8 +2,8 @@ require('dotenv').config();
 const fetch = require('node-fetch');
 module.exports = async (req, res, next) => {
     const authUrl = "https://caterwauling-torta.glitch.me/auth";
-    console.log(req.headers.token, process.env.secret_key_jwt);
-    if (req.headers.token == null){
+    //console.log(req.headers.token, process.env.secret_key_jwt);
+    if (req.headers.token == (null || undefined) ){
         res.status(403).send({
             success: false,
             message: 'Error. Check your token'
@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
         });
 
         //if(link.stats)
-        console.log(response.status == 200);
+        //console.log(response.status == 200);
 
         if (response.status != 200) {
             res.status(403).send({

@@ -3,10 +3,8 @@ const Schema = mongoose.Schema
 const ObjectId = Schema.Types.ObjectId
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-const roomChat= mongoose.Schema({
-    roomID: {
-        type: ObjectId,
-    },
+const roomChats= mongoose.Schema({
+    roomID: String,
     member:[String],
     messages:[
         {
@@ -23,5 +21,5 @@ const roomChat= mongoose.Schema({
     }
     
 })
-roomChat.plugin(mongoosePaginate);
-module.exports= mongoose.model('roomChat',roomChat);
+roomChats.plugin(mongoosePaginate);
+module.exports= mongoose.model('roomChat',roomChats);

@@ -1,7 +1,7 @@
 require('dotenv').config();
 var cloudinary = require('cloudinary').v2;
 const { Room } = require('./models/room')
-const RoomChat = require('./models/chat_room');
+const RoomChats = require('./models/chat_room');
 const { ListGame } = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
 const ApproveList = require('./models/approve_list');
@@ -317,7 +317,29 @@ module.exports = resolvers = {
                 console.log(err);
                 
             })
+        },
+        getPrivateChatInfo : async (_,{roomID}) =>{
+            var member = [];
+            return ChatPrivate.findOne({_id:roomID}).select(["friend","currentUser"]).lean(true).then((v)=>{
+                //console.log(v.friend);,
+                // spread operator
+                member.push(...[v.friend],...[v.currentUser]);
+                //console.log(member);
+                
+                return {member: member};
+            }).catch((err)=>{
+                
+            })
+            
+        },
+        getRoomChatInfo: async (_,{groupID}) =>{
+            return RoomChats.findOne({ "roomID": groupID}).select(["member","roomID"]) .then((v)=>{
+                return v
+            }).catch((err)=>{
+                
+            });
         }
+
 
     },
     Mutation: {
@@ -367,6 +389,8 @@ module.exports = resolvers = {
 
                             })
                         }).catch(err => {
+                            console.log(err);
+                            
                             return onError("Create failed!")
                         })
                     })

@@ -145,6 +145,11 @@ const typeDefs = gql`
         getRoomMessage(hostID:String!,roomID:String!):RoomChat
         searchGame(name:String):Game
         getRoomJoin(userID:String):[Room]
+        getPrivateChatInfo(roomID:String):PrivateChatInfo
+        getRoomChatInfo(groupID:String):RoomChat
+    }
+    type PrivateChatInfo{
+        member:[Profile]
     }
     interface Message{
         _id:ID
@@ -299,7 +304,7 @@ const typeDefs = gql`
     }
   
     type RoomChat{
-        _id:ID!
+        
         roomID:String
         member:[String]
         messages:[
@@ -346,6 +351,7 @@ const typeDefs = gql`
         profile_url:String
     }
     input RoomChatInput{
+        roomID:String
         member:[
             String
         ]
