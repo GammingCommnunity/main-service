@@ -6,6 +6,7 @@ const Schema = require('./schema');
 const { createServer } =require ('http');
 const express= require('express');
 const  checkSession = require('./middleware/checkSession');
+const cors = require('cors');
 require('dotenv').config()
 require('os').tmpdir();
 const { SubscriptionServer } = require ('subscriptions-transport-ws');
@@ -75,6 +76,7 @@ const server = new ApolloServer({
 // );
 const port = process.env.PORT || 4000;
 const app = express();
+app.use(cors())
 const path= '/graphql';
 app.use(path,checkSession);
 server.applyMiddleware({ app, path})
