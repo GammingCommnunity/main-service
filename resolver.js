@@ -180,9 +180,9 @@ module.exports = resolvers = {
 
 
         // lay tat ca tin nhan trog mot phong dua vao id_room
-        async getRoomMessage(root, { hostID, roomID, sl }) {
+        async getRoomMessage(root, { roomID }) {
 
-            return RoomChat.findOne({ "roomID": roomID }).then(result => {
+            return RoomChats.findOne({ "roomID": roomID }).then(result => {
                 return result
             })
         },
@@ -492,7 +492,7 @@ module.exports = resolvers = {
         //them tin nhan vao group chat 
         async chatRoom(root, { roomID, messages }) {
 
-            return RoomChat.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
+            return RoomChats.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
                 const now = new Date().toISOString();
                 const messges = {
                     "groupID": roomID,

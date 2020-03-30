@@ -21,7 +21,6 @@ const server = new ApolloServer({
     schema: Schema,
     playground: true,
     introspection: true,
-    tracing:true,
     persistedQueries: {
         cache: new MemcachedCache(
             ['memcached-server-1', 'memcached-server-2', 'memcached-server-3'],

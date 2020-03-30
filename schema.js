@@ -142,14 +142,21 @@ const typeDefs = gql`
         getSummaryByGameID(gameID:String!):[Game]
         countRoomOnEachGame(sort:SortEnum!):[Game]
         fetchNews(name:String!,page:Int,limit:Int):[News]
-        getRoomMessage(hostID:String!,roomID:String!):RoomChat
+        getRoomMessage(roomID:String!):RoomChat
         searchGame(name:String):Game
         getRoomJoin(userID:String):[Room]
         getPrivateChatInfo(roomID:String):PrivateChatInfo
         getRoomChatInfo(groupID:String):RoomChat
+        
     }
     type PrivateChatInfo{
         member:[Profile]
+    }
+    type RoomMessage implements Message{
+        _id:ID
+        userID:String
+        text: String,
+        createAt: Date
     }
     interface Message{
         _id:ID
@@ -308,7 +315,7 @@ const typeDefs = gql`
         roomID:String
         member:[String]
         messages:[
-            Message
+            RoomMessage
         ]
     }
   
