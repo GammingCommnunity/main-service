@@ -12,6 +12,10 @@ const ChatPrivate = mongoose.Schema({
     },
     messages:[
         {
+            messageType: {
+                type: String,
+                required: true
+            },
             user: {
                 id: String,
                 profile_url: String
@@ -24,6 +28,7 @@ const ChatPrivate = mongoose.Schema({
         }
     ]
     
-});
+}
+);
 ChatPrivate.plugin(mongoosePaginate);
 module.exports = mongoose.model('chatPrivate', ChatPrivate);

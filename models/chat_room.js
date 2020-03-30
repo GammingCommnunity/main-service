@@ -8,9 +8,9 @@ const roomChats= mongoose.Schema({
     member:[String],
     messages:[
         {
-            
             userID:String,
             text:String,
+            messageType:String,
             createAt:{ 
                 type: Date, 
                 default: Date.now }

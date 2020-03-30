@@ -31,6 +31,10 @@ const Enum={
         rpg:"RPG",
         rts:"RTS"
     },
+    MessageType: {
+        text:"text",
+        media:"media"
+    }
 }
 
 

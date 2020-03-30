@@ -10,7 +10,7 @@ const { GraphQLUpload } = require('graphql-upload');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
-const { Genres, Platforms } = require('./src/enum');
+const { Genres, Platforms ,MessageType} = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
@@ -23,7 +23,7 @@ module.exports = resolvers = {
     Date: Date,
     AuthResponse, Message, MutationResponse, ResultTest,
     //import enum type here
-    Genres, Platforms,
+    Genres, Platforms, MessageType,
 
     Subscription: {
         onJoinRoom: {
@@ -382,8 +382,8 @@ module.exports = resolvers = {
                             return onError('fail', "This name already taken")
                         }
                         else return Room.create(roomInput).then(async (value) => {
-                            return RoomChat.create(roomChatInput).then(async (v) => {
-                                return RoomChat.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
+                            return RoomChats.create(roomChatInput).then(async (v) => {
+                                return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
                                     return onSuccess("Create success!")
                                 })
 
@@ -491,11 +491,13 @@ module.exports = resolvers = {
         },
         //them tin nhan vao group chat 
         async chatRoom(root, { roomID, messages }) {
-
+            console.log(messages);
+            
             return RoomChats.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
                 const now = new Date().toISOString();
                 const messges = {
                     "groupID": roomID,
+                    "type":messages.type,
                     "senderID": messages.userID,
                     "message": messages.text,
                     "sendDate": now

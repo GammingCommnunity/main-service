@@ -44,6 +44,10 @@ const typeDefs = gql`
         rts
         rpg
     }
+    enum MessageType{
+        text
+        media
+    }
     type userSubscription{
         userID:String,
         joinTime:Date,
@@ -154,6 +158,7 @@ const typeDefs = gql`
     }
     type RoomMessage implements Message{
         _id:ID
+        messageType:String
         userID:String
         text: String,
         createAt: Date
@@ -185,6 +190,7 @@ const typeDefs = gql`
     
     type PrivateChatMessages implements Message{
         _id:ID
+        type:String
         user:Profile
         text:String,
         createAt:Date
@@ -349,6 +355,7 @@ const typeDefs = gql`
     }
    
     input MessageInput{
+        messageType:MessageType
         userID:String
         text:String!
         createAt:Date
