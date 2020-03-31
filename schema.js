@@ -151,7 +151,12 @@ const typeDefs = gql`
         getRoomJoin(userID:String):[Room]
         getPrivateChatInfo(roomID:String):PrivateChatInfo
         getRoomChatInfo(groupID:String):RoomChat
-        
+        getPrivateMedia(chatID:String):[Media]
+        getRoomMedia(roomID:String):[Media]
+    }
+    type Media{
+        text:String,
+        createAt:Date
     }
     type PrivateChatInfo{
         member:[Profile]

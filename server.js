@@ -76,7 +76,7 @@ const server = new ApolloServer({
 // );
 const port = process.env.PORT || 4000;
 const app = express();
-app.use(cors())
+app.use(cors({ origin: '*'}))
 const path= '/graphql';
 app.use(path,checkSession);
 server.applyMiddleware({ app, path})
