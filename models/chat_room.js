@@ -6,6 +6,7 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 const roomChats= mongoose.Schema({
     roomID: String,
     member:[String],
+    background:String,
     messages:[
         {
             userID:String,

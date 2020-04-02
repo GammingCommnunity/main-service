@@ -195,8 +195,8 @@ const typeDefs = gql`
     
     type PrivateChatMessages implements Message{
         _id:ID
-        type:String
-        user:Profile
+        messageType:String
+        id:String
         text:String,
         createAt:Date
     }
@@ -361,14 +361,16 @@ const typeDefs = gql`
    
     input MessageInput{
         messageType:MessageType
-        userID:String
+        id:String
         text:String!
         createAt:Date
     }
+
     input ProfileInput{
         id:String
         profile_url:String
     }
+
     input RoomChatInput{
         roomID:String
         member:[
@@ -379,6 +381,7 @@ const typeDefs = gql`
         ]
         createAt:Date
     }
+
     input GameInput{
         _id:ID
         name:String! 
@@ -396,19 +399,23 @@ const typeDefs = gql`
         video:VideoInput
 
     }
+
     input VideoInput{
         trailer:String!,
         gameplay:String
     }
+
     input imageInput{
         imageUrl: String,
         blur: String
     }
+
     input CreateChatInput{
         currentUser:ProfileInput!
         friend:ProfileInput!
         messages:MessageInput
     }
+
     input RoomBackgroundInput{
         name:String!,
         gameID:String,

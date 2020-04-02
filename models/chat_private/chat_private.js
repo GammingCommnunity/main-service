@@ -16,10 +16,7 @@ const ChatPrivate = mongoose.Schema({
                 type: String,
                 required: true
             },
-            user: {
-                id: String,
-                profile_url: String
-            },
+            id:String,
             text:String,
             createAt:{
                 type:Date,
