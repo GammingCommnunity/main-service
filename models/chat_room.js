@@ -10,7 +10,11 @@ const roomChats= mongoose.Schema({
     messages:[
         {
             userID:String,
-            text:String,
+            text:{
+                content:String,
+                height:Number,
+                width:Number
+            },
             messageType:String,
             createAt:{ 
                 type: Date, 

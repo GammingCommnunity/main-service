@@ -362,10 +362,14 @@ const typeDefs = gql`
     input MessageInput{
         messageType:MessageType
         id:String
-        text:String!
+        text:Custom!
         createAt:Date
     }
-
+    input Custom{
+        content:String
+        height:Float
+        width:Float
+    }
     input ProfileInput{
         id:String
         profile_url:String
