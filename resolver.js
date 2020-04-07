@@ -9,7 +9,7 @@ const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
-const { AuthResponse, Message, MutationResponse, ResultTest } = require('./interface');
+const { AuthResponse, MutationResponse} = require('./interface');
 const { Genres, Platforms ,MessageType} = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
@@ -21,7 +21,7 @@ const GROUP_MESSAGE = 'GROUP_MESSAGE';
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
-    AuthResponse, Message, MutationResponse, ResultTest,
+    AuthResponse, MutationResponse,
     //import enum type here
     Genres, Platforms, MessageType,
 

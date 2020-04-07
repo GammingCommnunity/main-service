@@ -161,18 +161,19 @@ const typeDefs = gql`
     type PrivateChatInfo{
         member:[Profile]
     }
-    type RoomMessage implements Message{
+    type RoomMessage{
         _id:ID
         messageType:String
-        userID:String
-        text: String,
+        id:String
+        text: TextMessageType,
         createAt: Date
     }
-    interface Message{
-        _id:ID
-        text: String,
-        createAt: Date
+    type TextMessageType{
+        content:String
+        height:Float
+        width:Float    
     }
+
     type News{
         article_url:String,
         article_short:String,
@@ -193,11 +194,11 @@ const typeDefs = gql`
         ]
     }
     
-    type PrivateChatMessages implements Message{
+    type PrivateChatMessages{
         _id:ID
         messageType:String
         id:String
-        text:String,
+        text:TextMessageType,
         createAt:Date
     }
 
@@ -280,11 +281,6 @@ const typeDefs = gql`
         imageUrl: String,
         blur: String
     }
-    type ListMessage{
-        userID:String!
-        listmessage:[Message]
-    }
-  
     
     type JoinRoomResponse implements MutationResponse{
         status:String
@@ -478,13 +474,7 @@ const typeDefs = gql`
             input:MessageInput):ResultCRUD
             
         chatRoom(roomID:String!,messages:MessageInput):ResultCRUD
-        """
-            *** (WIP) ***
-
-        """
-        chatUpdate(
-            name:String!,
-            input:MessageInput):ListMessage
+        
         """
             *** 
             Join a room 

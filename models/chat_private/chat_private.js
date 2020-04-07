@@ -17,7 +17,9 @@ const ChatPrivate = mongoose.Schema({
                 required: true
             },
             id:String,
-            text:String,
+            text:{
+                
+            },
             createAt:{
                 type:Date,
                 default:Date.now()

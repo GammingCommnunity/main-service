@@ -19,23 +19,11 @@ const Interface= {
             return null;
         },
     },
-    ResultTest: {
 
-        __resolveType(obj, context, info) {
-
-            if (obj.room_name) {
-                console.log(obj);
-                return Room.find().then((v) => {
-                    return v;
-                });
-            }
-            if (obj.game_name) {
-                return ListGame.find().then((v) => {
-                    return v;
-                });
-            }
+    TextMessage:{
+        __resolveType(Message, context, info) {
             return null;
-        }
-    },
+        },
+    }
 }
 module.exports = Interface;
