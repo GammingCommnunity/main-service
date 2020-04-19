@@ -1,7 +1,6 @@
-const { ApolloServer, AuthenticationError } = require('apollo-server-express');
+const { ApolloServer} = require('apollo-server-express');
 const { MemcachedCache } = require('apollo-server-cache-memcached')
 const mongoose = require('mongoose');
-const { execute, subscribe } = require ('graphql');
 const Schema = require('./schema');
 const { createServer } =require ('http');
 const express= require('express');
@@ -76,7 +75,7 @@ const server = new ApolloServer({
 // );
 const port = process.env.PORT || 4000;
 const app = express();
-app.use(cors({ origin: '*'}))
+app.use(cors()) 
 const path= '/graphql';
 app.use(path,checkSession);
 server.applyMiddleware({ app, path})
