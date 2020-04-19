@@ -4,7 +4,6 @@ const Resolvers = require('./resolver');
 
 const typeDefs = gql`
     
-    union ResultTest= Room|Game  
     scalar Upload
     scalar Date
     enum SortEnum{

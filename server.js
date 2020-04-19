@@ -80,9 +80,11 @@ app.use(cors({ origin: '*'}))
 const path= '/graphql';
 app.use(path,checkSession);
 server.applyMiddleware({ app, path})
-app.listen(port,() => {
-
-    console.log(`🚀  Server ready at ${port}`);
+const httpServer = createServer(app);
+server.installSubscriptionHandlers(httpServer);
+httpServer.listen(port,() => {
+    console.log(`?? Server ready at http://localhost:${port}${server.graphqlPath}`);
+    console.log(`?? Subscriptions ready at ws://localhost:${port}${server.subscriptionsPath}`);
     mongoose.Promise = global.Promise;
     mongoose.set('useFindAndModify', false);
     mongoose.set('debug', true);
