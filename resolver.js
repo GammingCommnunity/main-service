@@ -14,6 +14,9 @@ const { Genres, Platforms ,MessageType} = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
+const {checkHost} = require('./service/roomService');
+const mongoose = require('mongoose');
+var crypto = require("crypto");
 const pubsub = new PubSub();
 const JOIN_ROOM = 'JOIN_ROOM';
 const RECIEVE_MESSAGE = 'RECIEVE_MESSAGE';
@@ -27,7 +30,12 @@ module.exports = resolvers = {
 
     Subscription: {
         onJoinRoom: {
-            subscribe: () => pubsub.asyncIterator([JOIN_ROOM])
+            subscribe: withFilter(
+                () => pubsub.asyncIterator([JOIN_ROOM]),
+                (payload,variable) =>{
+                    return payload.onJoinRoom.hostID === variable.hostID
+                }
+            )
         },
         recieveNewMessage: {
             subscribe: () => pubsub.asyncIterator([RECIEVE_MESSAGE])
@@ -338,8 +346,23 @@ module.exports = resolvers = {
             }).catch((err)=>{
                 
             });
-        }
+        },
+        inviteToRoom: async (_,{hostID,roomID})=>{
+            // double of randombytes
+            let r = crypto.randomBytes(3).toString('hex');
+            if(checkHost(roomID,hostID)){
+                // true, add code to that room
+                return Room.updateOne({"_id":roomID},{"code":r}).then((v)=>{
+                    return onSuccess("Successful generate code !",r)
+                }).catch((err)=>{
+                    return onError('fail', "Generate fail. Try again")
+                })
+            }
+            else{
+                return onError('fail', "You don't have permission!")
+            }
 
+        }
 
     },
     Mutation: {
@@ -411,24 +434,25 @@ module.exports = resolvers = {
          * @param {roomID} "room user join" 
          * @param {Info} "info need for approve list"
          */
-        async joinRoom(root, { roomID, currentUserID, info }) {
+        async joinRoom(root, { roomID, currentID, info }) {
             //check userID is not host
 
-            return Room.aggregate([{ $match: { "roomID": roomID, "hostID": currentUserID }, }]).then((v) => {
-                console.log(v.length);
+            return Room.aggregate([{ $match: { "_id": mongoose.Types.ObjectId(roomID), "hostID": currentID }, }]).then((result) => {
+                console.log(result);
 
-                if (v.length < 1) {
+                if (result.length == 0) {
                     return ApproveList.find({ "roomID": roomID }).then((v) => {
-                        console.log(v.length);
 
                         if (v.length < 0) {
                             return onError('fail', "You has been joined room, choose another room")
                         }
-                        else return ApproveList.create(info).then((v) => {
+                        else return ApproveList.create(info).then((apporoveResult) => {
 
                             const newComer = {
-                                "userID": v.userID,
-                                "joinTime": v.joinTime,
+                                "roomName":result.roomName,
+                                "hostID": result.hostID,
+                                "userID": apporoveResult.userID,
+                                "joinTime": apporoveResult.joinTime,
                                 "isApprove": false
                             }
                             pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })

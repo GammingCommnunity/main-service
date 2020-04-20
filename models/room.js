@@ -30,6 +30,10 @@ const Rooms = mongoose.Schema({
   createAt:{
     type:Date,
     default:Date.now()
+  },
+  code:{
+    type:String,
+    default:""
   }
 })
 

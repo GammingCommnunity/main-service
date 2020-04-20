@@ -1,6 +1,6 @@
 module.exports ={
     ///
-    onError: (err,messages)=>{
+    onError: (err, messages, payload)=>{
         switch (err) {
             case "unAuth":
                 return {
@@ -19,11 +19,12 @@ module.exports ={
                 break;
         }
     },
-    onSuccess: (messages)=>{
+    onSuccess: (messages,payload)=>{
         return {
             "status": 200,
             "success": true,
-            "message": messages
+            "message": messages,
+            "payload": payload
         }
     }
 }

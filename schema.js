@@ -6,6 +6,7 @@ const typeDefs = gql`
     
     scalar Upload
     scalar Date
+
     enum SortEnum{
         DESC
         ASC
@@ -48,8 +49,9 @@ const typeDefs = gql`
         media
     }
     type userSubscription{
-        userID:String,
-        joinTime:Date,
+        roomName:String
+        userID:String
+        joinTime:Date
         isApprove:Boolean
     }
     type messageSubscription{
@@ -65,7 +67,7 @@ const typeDefs = gql`
     
     }
     type Subscription{
-        onJoinRoom: userSubscription
+        onJoinRoom(hostID:String): userSubscription
         recieveNewMessage:messageSubscription
         """
         *** only listen to new message from groupID
@@ -152,6 +154,8 @@ const typeDefs = gql`
         getRoomChatInfo(groupID:String):RoomChat
         getPrivateMedia(chatID:String):[Media]
         getRoomMedia(roomID:String):[Media]
+        inviteToRoom(hostID:String,roomID:String):ResultCRUD
+
     }
     type Media{
         text:String,
@@ -285,7 +289,7 @@ const typeDefs = gql`
         status:String
         success: Boolean!
         message: String!
-    
+        
     }
 
     type UploadImage implements MutationResponse{
@@ -312,8 +316,10 @@ const typeDefs = gql`
 
     type ResultCRUD implements MutationResponse{
         status:String
+        payload:String
         success:Boolean!
         message:String!
+        
     }
   
     type RoomChat{
@@ -482,7 +488,7 @@ const typeDefs = gql`
         """
         joinRoom(
             roomID:String!,
-            currentUserID:String!,
+            currentID:String!,
             info:Info!):ResultCRUD
         
         createPrivateChat(input:CreateChatInput):ResultCRUD
