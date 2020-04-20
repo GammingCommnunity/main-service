@@ -9,12 +9,12 @@ const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
-const { AuthResponse, MutationResponse} = require('./interface');
-const { Genres, Platforms ,MessageType} = require('./src/enum');
+const { AuthResponse, MutationResponse } = require('./interface');
+const { Genres, Platforms, MessageType } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
-const {checkHost} = require('./service/roomService');
+const { checkHost, getRoomInfo } = require('./service/roomService');
 const mongoose = require('mongoose');
 var crypto = require("crypto");
 const pubsub = new PubSub();
@@ -32,7 +32,7 @@ module.exports = resolvers = {
         onJoinRoom: {
             subscribe: withFilter(
                 () => pubsub.asyncIterator([JOIN_ROOM]),
-                (payload,variable) =>{
+                (payload, variable) => {
                     return payload.onJoinRoom.hostID === variable.hostID
                 }
             )
@@ -138,8 +138,8 @@ module.exports = resolvers = {
         async getRoomCreateByUser(root, { userID }) {
             return Room.aggregate([{ $match: { "hostID": userID } }]);
         },
-        async getRoomJoin(_,{userID}) {
-            return Room.find({ "member": { "$in": [userID]}});
+        async getRoomJoin(_, { userID }) {
+            return Room.find({ "member": { "$in": [userID] } });
         },
         /* async joinRoomChat(root, { id_room, id_user }) {
              return RoomChat.findOneAndUpdate({ "id_room": id_room }, { $push: { member: v } }, { upsert: true, new: true }).then(value => {
@@ -316,49 +316,49 @@ module.exports = resolvers = {
             }
         },
         searchGame: async (_, { name }) => {
-            let regex = new RegExp(name,'i');
-            return ListGame.findOne({$text:{$search:name}}).then((v)=>{
+            let regex = new RegExp(name, 'i');
+            return ListGame.findOne({ $text: { $search: name } }).then((v) => {
                 console.log(v);
-                
+
                 return v;
-            }).catch((err)=>{
+            }).catch((err) => {
                 console.log(err);
-                
+
             })
         },
-        getPrivateChatInfo : async (_,{roomID}) =>{
+        getPrivateChatInfo: async (_, { roomID }) => {
             var member = [];
-            return ChatPrivate.findOne({_id:roomID}).select(["friend","currentUser"]).lean(true).then((v)=>{
+            return ChatPrivate.findOne({ _id: roomID }).select(["friend", "currentUser"]).lean(true).then((v) => {
                 //console.log(v.friend);,
                 // spread operator
-                member.push(...[v.friend],...[v.currentUser]);
+                member.push(...[v.friend], ...[v.currentUser]);
                 //console.log(member);
-                
-                return {member: member};
-            }).catch((err)=>{
-                
+
+                return { member: member };
+            }).catch((err) => {
+
             })
-            
+
         },
-        getRoomChatInfo: async (_,{groupID}) =>{
-            return RoomChats.findOne({ "roomID": groupID}).select(["member","roomID"]) .then((v)=>{
+        getRoomChatInfo: async (_, { groupID }) => {
+            return RoomChats.findOne({ "roomID": groupID }).select(["member", "roomID"]).then((v) => {
                 return v
-            }).catch((err)=>{
-                
+            }).catch((err) => {
+
             });
         },
-        inviteToRoom: async (_,{hostID,roomID})=>{
+        inviteToRoom: async (_, { hostID, roomID }) => {
             // double of randombytes
             let r = crypto.randomBytes(3).toString('hex');
-            if(checkHost(roomID,hostID)){
+            if (checkHost(roomID, hostID)) {
                 // true, add code to that room
-                return Room.updateOne({"_id":roomID},{"code":r}).then((v)=>{
-                    return onSuccess("Successful generate code !",r)
-                }).catch((err)=>{
+                return Room.updateOne({ "_id": roomID }, { "code": r }).then((v) => {
+                    return onSuccess("Successful generate code !", r)
+                }).catch((err) => {
                     return onError('fail', "Generate fail. Try again")
                 })
             }
-            else{
+            else {
                 return onError('fail', "You don't have permission!")
             }
 
@@ -413,7 +413,7 @@ module.exports = resolvers = {
                             })
                         }).catch(err => {
                             console.log(err);
-                            
+
                             return onError("Create failed!")
                         })
                     })
@@ -436,37 +436,36 @@ module.exports = resolvers = {
          */
         async joinRoom(root, { roomID, currentID, info }) {
             //check userID is not host
+            if (await checkHost(roomID, currentID)) {
+                return onError('fail', "You are host");
+            }
+            else {
 
-            return Room.aggregate([{ $match: { "_id": mongoose.Types.ObjectId(roomID), "hostID": currentID }, }]).then((result) => {
-                console.log(result);
+                var roomInfo = await getRoomInfo(roomID);
+                return ApproveList.find({ "roomID": roomID, "userID": currentID}).then((v) => {
 
-                if (result.length == 0) {
-                    return ApproveList.find({ "roomID": roomID }).then((v) => {
+                    if (v.length > 0) {
+                        return onError('fail', "You has been joined room, choose another room")
+                    }
+                    else return ApproveList.create(info).then((apporoveResult) => {
 
-                        if (v.length < 0) {
-                            return onError('fail', "You has been joined room, choose another room")
+                        const newComer = {
+                            "roomName": roomInfo.roomName,
+                            "hostID": info.hostID,
+                            "userID": apporoveResult.userID,
+                            "joinTime": apporoveResult.joinTime,
+                            "isApprove": false
                         }
-                        else return ApproveList.create(info).then((apporoveResult) => {
+                        pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
 
-                            const newComer = {
-                                "roomName":result.roomName,
-                                "hostID": result.hostID,
-                                "userID": apporoveResult.userID,
-                                "joinTime": apporoveResult.joinTime,
-                                "isApprove": false
-                            }
-                            pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
+                        return onSuccess("Waiting for apporove");;
 
-                            return onSuccess("Waiting for apporove");;
-
-                        })
                     })
-                }
-                else {
-                    return onError('fail', "You are host");
-                }
+                })
 
-            })
+
+            }
+
         },
         editRoom: async (_, { hostID, roomID, newData }, context) => {
 
@@ -516,12 +515,12 @@ module.exports = resolvers = {
         //them tin nhan vao group chat 
         async chatRoom(root, { roomID, messages }) {
             console.log(messages);
-            
+
             return RoomChats.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
                 const now = new Date().toISOString();
                 const messges = {
                     "groupID": roomID,
-                    "type":messages.type,
+                    "type": messages.type,
                     "senderID": messages.userID,
                     "message": messages.text,
                     "sendDate": now
