@@ -407,7 +407,7 @@ module.exports = resolvers = {
                         else return Room.create(roomInput).then(async (value) => {
                             return RoomChats.create(roomChatInput).then(async (v) => {
                                 return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
-                                    return onSuccess("Create success!")
+                                    return onSuccess("Create success!",value._id)
                                 })
 
                             })
