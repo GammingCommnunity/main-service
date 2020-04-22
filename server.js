@@ -27,8 +27,9 @@ const server = new ApolloServer({
     },
     
     context: ({ req }) => {
-        //const token = req.headers.token || null;
+        const token = req.headers.token || null;
         return {
+            token,
             dataloaders: {
                 roomLoader: getRoomLoader(),
                 listGameLoader: getListGameLoader()

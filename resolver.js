@@ -378,9 +378,12 @@ module.exports = resolvers = {
         }
         ,
         async removeRoom(root, { roomID, userID }, context) {
+            
             try {
-                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
-                if (result.id == userID) {
+                /*let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
+                console.log(result);*/
+
+                if (userID == userID) {
                     return Room.deleteOne({ "_id": roomID }).then((v) => {
                         return onSuccess("Remove success!");
 
@@ -390,6 +393,8 @@ module.exports = resolvers = {
                 }
             }
             catch (e) {
+                console.log(e);
+                
                 return onError('unAuth', new AuthenticationError("Wrong token"))
             }
         },
@@ -407,7 +412,7 @@ module.exports = resolvers = {
                         else return Room.create(roomInput).then(async (value) => {
                             return RoomChats.create(roomChatInput).then(async (v) => {
                                 return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
-                                    return onSuccess("Create success!",value._id)
+                                    return onSuccess("Create success!", value._id)
                                 })
 
                             })
@@ -442,7 +447,7 @@ module.exports = resolvers = {
             else {
 
                 var roomInfo = await getRoomInfo(roomID);
-                return ApproveList.find({ "roomID": roomID, "userID": currentID}).then((v) => {
+                return ApproveList.find({ "roomID": roomID, "userID": currentID }).then((v) => {
 
                     if (v.length > 0) {
                         return onError('fail', "You has been joined room, choose another room")
