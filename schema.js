@@ -315,7 +315,7 @@ const typeDefs = gql`
     }
 
     type ResultCRUD implements MutationResponse{
-        status:String
+        status:Int
         payload:String
         success:Boolean!
         message:String!
