@@ -148,7 +148,10 @@ const typeDefs = gql`
         countRoomOnEachGame(sort:SortEnum!):[Game]
         fetchNews(name:String!,page:Int,limit:Int):[News]
         getRoomMessage(roomID:String!):RoomChat
-        searchGame(name:String):Game
+        """
+            *** Search game by name or by id (specify one of them)***
+        """
+        searchGame(name:String,id:String):Game
         getRoomJoin(userID:String):[Room]
         getPrivateChatInfo(roomID:String):PrivateChatInfo
         getRoomChatInfo(groupID:String):RoomChat

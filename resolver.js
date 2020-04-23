@@ -15,6 +15,7 @@ const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const { checkHost, getRoomInfo } = require('./service/roomService');
+const {getGameInfo } = require('./service/gameService');
 const mongoose = require('mongoose');
 var crypto = require("crypto");
 const pubsub = new PubSub();
@@ -315,16 +316,19 @@ module.exports = resolvers = {
                     break;
             }
         },
-        searchGame: async (_, { name }) => {
+        searchGame: async (_, { name,id }) => {
             let regex = new RegExp(name, 'i');
-            return ListGame.findOne({ $text: { $search: name } }).then((v) => {
-                console.log(v);
+            if (name != null) {
+                return ListGame.findOne({ $text: { $search: name } }).then((v) => {
+                    console.log(v);
 
-                return v;
-            }).catch((err) => {
-                console.log(err);
+                    return v;
+                }).catch((err) => {
+                    console.log(err);
 
-            })
+                })
+            }
+            return await getGameInfo(id);
         },
         getPrivateChatInfo: async (_, { roomID }) => {
             var member = [];
