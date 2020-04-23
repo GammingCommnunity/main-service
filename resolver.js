@@ -362,6 +362,9 @@ module.exports = resolvers = {
                 return onError('fail', "You don't have permission!")
             }
 
+        },
+        getRoomInfo: async (_, { roomID }) => {
+            return await getRoomInfo(roomID);
         }
 
     },

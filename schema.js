@@ -155,7 +155,7 @@ const typeDefs = gql`
         getPrivateMedia(chatID:String):[Media]
         getRoomMedia(roomID:String):[Media]
         inviteToRoom(hostID:String,roomID:String):ResultCRUD
-
+        getRoomInfo(roomID:String!):Room
     }
     type Media{
         text:String,
