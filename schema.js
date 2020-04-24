@@ -258,8 +258,10 @@ const typeDefs = gql`
         member:[String]
         maxOfMember:Int
         createAt:Date
-        status:String!
         code:String!
+        roomLogo:String
+        roomBackground:String
+        status:String!
     }
   
     type Game{
@@ -355,6 +357,8 @@ const typeDefs = gql`
         member:[String]!
         maxOfMember:Int!
         game:GameInfo
+        roomLogo:String!
+        roomBackground:String!
     }
    
     input GameInfo{

@@ -318,7 +318,7 @@ module.exports = resolvers = {
         },
         searchGame: async (_, { name,id }) => {
             let regex = new RegExp(name, 'i');
-            if (name != null) {
+            if (name != "") {
                 return ListGame.findOne({ $text: { $search: name } }).then((v) => {
                     console.log(v);
 

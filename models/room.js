@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
-const DataLoader= require('dataloader');
+const DataLoader = require('dataloader');
+require('dotenv').config();
 const Rooms = mongoose.Schema({
   
   roomName: {
@@ -30,6 +31,15 @@ const Rooms = mongoose.Schema({
   createAt:{
     type:Date,
     default:Date.now()
+  },
+  roomLogo: {
+    type: String,
+    default: process.env.default_logo
+    
+  },
+  roomBackground: {
+    type: String,
+    default: process.env.default_background
   },
   code:{
     type:String,
