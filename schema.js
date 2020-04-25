@@ -473,7 +473,7 @@ const typeDefs = gql`
         """ 
         ***Edit room info***
         """
-        editRoom(roomID:ID!,hostID:ID!,newData:RoomInput):ResultCRUD
+        editRoom(roomID:ID!,hostID:String!,newData:RoomInput):ResultCRUD
 
         """
             *** Chat with someone privately***

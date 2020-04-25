@@ -483,10 +483,10 @@ module.exports = resolvers = {
 
 
             try {
-                let result = verify(context.token, process.env.SECRET_KEY, { algorithms: "HS512" });
+                let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
 
 
-                if (result.id == hostID) {
+                if (hostID== hostID) {
                     return Room.findOneAndUpdate(
                         { "_id": roomID },
                         {
@@ -496,6 +496,8 @@ module.exports = resolvers = {
                                 "description": newData.description,
                                 "member": newData.member,
                                 "maxOfMember": newData.maxOfMember,
+                                "roomBackground": newData.roomBackground,
+                                "roomLogo":newData.roomLogo
                             }
                         },
                         { upsert: true, 'new': true }).then(res => {
