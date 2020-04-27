@@ -591,7 +591,7 @@ module.exports = resolvers = {
 
         },
 
-        cancelRequest: async (_, { roomID, userID }) => {
+        cancelRequest: async (_, {hostID,roomID, userID }) => {
             var result = await deleteJoinRequest(hostID, userID, roomID);
             return result ? onSuccess("Cancel success") : onError("fail","Has error");
         },
