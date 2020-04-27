@@ -9,13 +9,12 @@ const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
-const { AuthResponse, MutationResponse } = require('./interface');
 const { Genres, Platforms, MessageType } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const { checkHost, getRoomInfo } = require('./service/roomService');
-const {getGameInfo } = require('./service/gameService');
+const { getGameInfo } = require('./service/gameService');
 const mongoose = require('mongoose');
 var crypto = require("crypto");
 const pubsub = new PubSub();
@@ -25,7 +24,6 @@ const GROUP_MESSAGE = 'GROUP_MESSAGE';
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
-    AuthResponse, MutationResponse,
     //import enum type here
     Genres, Platforms, MessageType,
 
@@ -50,14 +48,6 @@ module.exports = resolvers = {
         }
     },
     Query: {
-
-        generateToken: async (_, { id }) => {
-            var token = sign({
-                id_user: id,
-                role: "User"
-            }, process.env.SECRET_KEY, { expiresIn: "7d" });
-            return token;
-        },
 
         async getAllRoom(_, { page, limit }, { token, dataloaders: { roomLoader } }) {
 
@@ -100,32 +90,6 @@ module.exports = resolvers = {
 
         async getAllRoomChat() {
             return await RoomChat.find();
-        },
-
-        async RmvMbFrRoom(root, { type, userID, roomID }) {
-            if (type == "all") {
-                //removeAllMemberExceptHost
-                return Room.updateMany({ "_id": roomID }, { $pull: { "member": { "member.$[].isHost": false } } }, { multi: true }, (err, raw) => {
-                    console.log("raw " + raw);
-
-                }).then(value => {
-
-                    return { "data": value, "result": true }
-                }).catch(err => {
-                    return { "data": err, "result": false }
-                });
-            } else if (type == "once") {
-                //remove specify member
-                return Room.findOneAndUpdate({ _id: idRoom }, { $pull: { "member": { "_id": { $in: [userID] } } } }, { rawResult: true }).then(value => {
-                    console.log(value);
-                    if (value) { return { "data": value, "result": true } }
-                }).catch(err => {
-                    console.log("err " + err);
-
-                    return { err, "result": false }
-                });
-            }
-
         },
 
         async changeHost(root, { oldHost, newHost }) {
@@ -236,13 +200,7 @@ module.exports = resolvers = {
             }
 
         },
-        getRandomGame: async (root) => {
-            return await ListGame.find({}, {}, { slice: { 'images': 1 } }).then((f) => {
-                var listImage = [];
-                //console.log(f)
-                return f;
-            });
-        },
+
         getGameByGenre: async (root, { type }, context) => {
             console.log("Token here", context.token);
             return ListGame.find({ "genres": { $regex: type, $options: 'i' } }).then((v) => {
@@ -251,14 +209,14 @@ module.exports = resolvers = {
             })
         },
         // show ra nhung phong host ma co thanh vien cho 
-        approveList_Host: async (root, { hostID }, context) => {
+        manageRequestJoin_Host: async (root, { hostID }, context) => {
             return ApproveList.aggregate([{ $match: { "hostID": hostID } }]).then((v) => {
                 return v;
             });
 
         },
         // show ra nhung phong user dang cho duoc duyet 
-        approveList_User: async (root, { userID }, context) => {
+        getPendingJoinRoom_User: async (root, { userID }, context) => {
             return ApproveList.aggregate([{ $match: { "userID": userID } }]).then((v) => {
                 return v;
             })
@@ -316,7 +274,7 @@ module.exports = resolvers = {
                     break;
             }
         },
-        searchGame: async (_, { name,id }) => {
+        searchGame: async (_, { name, id }) => {
             let regex = new RegExp(name, 'i');
             if (name != "") {
                 return ListGame.findOne({ $text: { $search: name } }).then((v) => {
@@ -369,7 +327,9 @@ module.exports = resolvers = {
         },
         getRoomInfo: async (_, { roomID }) => {
             return await getRoomInfo(roomID);
-        }
+        },
+
+
 
     },
     Mutation: {
@@ -385,7 +345,7 @@ module.exports = resolvers = {
         }
         ,
         async removeRoom(root, { roomID, userID }, context) {
-            
+
             try {
                 /*let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
                 console.log(result);*/
@@ -401,7 +361,7 @@ module.exports = resolvers = {
             }
             catch (e) {
                 console.log(e);
-                
+
                 return onError('unAuth', new AuthenticationError("Wrong token"))
             }
         },
@@ -483,10 +443,10 @@ module.exports = resolvers = {
 
 
             try {
-                let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
+                //let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
 
 
-                if (hostID== hostID) {
+                if (hostID == hostID) {
                     return Room.findOneAndUpdate(
                         { "_id": roomID },
                         {
@@ -497,7 +457,7 @@ module.exports = resolvers = {
                                 "member": newData.member,
                                 "maxOfMember": newData.maxOfMember,
                                 "roomBackground": newData.roomBackground,
-                                "roomLogo":newData.roomLogo
+                                "roomLogo": newData.roomLogo
                             }
                         },
                         { upsert: true, 'new': true }).then(res => {
@@ -637,6 +597,42 @@ module.exports = resolvers = {
                 return { status: 200, "success": false, "message": "Create fail!" }
             });
         },
+
+        confirmUserRequest: async (_, {hostID,userID}) => {
+            var result = await ApproveList.findOne({ "hostID": hostID, "userID": userID });
+            console.log(result);
+            
+        },
+        cancelRequest: async (_, { roomID,userID}) => {
+            
+        },
+
+        RmvMbFrRoom: async (root, { type, userID, roomID }) =>{
+            if (type == "all") {
+                //removeAllMemberExceptHost
+                return Room.updateMany({ "_id": roomID }, { $pull: { "member": { "member.$[].isHost": false } } }, { multi: true }, (err, raw) => {
+                    console.log("raw " + raw);
+
+                }).then(value => {
+
+                    return { "data": value, "result": true }
+                }).catch(err => {
+                    return { "data": err, "result": false }
+                });
+            } else if (type == "once") {
+                //remove specify member
+                return Room.findOneAndUpdate({ _id: idRoom }, { $pull: { "member": { "_id": { $in: [userID] } } } }, { rawResult: true }).then(value => {
+                    console.log(value);
+                    if (value) { return { "data": value, "result": true } }
+                }).catch(err => {
+                    console.log("err " + err);
+
+                    return { err, "result": false }
+                });
+            }
+
+        },
+
         async upload(root, { file, userID, type }) {
             return (processUpload(file, userID));
         },
