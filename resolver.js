@@ -9,11 +9,12 @@ const RoomBackground = require('./models/room_background');
 const { GraphQLUpload } = require('graphql-upload');
 const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
+const _ = require('lodash');
 const { Genres, Platforms, MessageType } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
-const { checkHost, getRoomInfo, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom } = require('./service/roomService');
+const { checkHost, getRoomInfo, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom,isJoinRoom } = require('./service/roomService');
 const { getGameInfo } = require('./service/gameService');
 var crypto = require("crypto");
 const pubsub = new PubSub();
@@ -228,8 +229,22 @@ module.exports = resolvers = {
                 return v;
             })
         },
-        getRoomByGame: async (root, { gameID }) => {
-            return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
+        getRoomByGame: async (root, { limit, page, gameID, userID }, { roomLoader}) => {
+            const result = (await Room.paginate({ "game.gameID": gameID}, { limit: limit, page: page })).docs;
+            var mapped = _.forEach(result, (value) => {
+
+                var member = _.get(value, "member");
+                if (_.includes(member, userID) && _.get(value, "hostID") != userID) {
+                    return _.assign(value, { "isJoin": true })
+                    
+                }
+                else {
+                    return _.assign(value, { "isJoin": false })
+                }
+                
+            })
+            return mapped;
+            //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
         roomManage: async (_, { hostID }) => {
             return Room.aggregate([{ $match: { "hostID": hostID } }]);

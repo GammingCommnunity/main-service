@@ -12,10 +12,15 @@ module.exports = {
             return false;
         }
     },
+    isJoinRoom: async (roomID,userID) => {
+        var result = await Room.aggregate([{ $match: { "member": userID, "hostID": { $ne: userID }, "_id": roomID } }]);
+        return result.length == 1 ? true : false;
+    },
     getRoomInfo: async (roomID) => {
         //const result = await Room.aggregate([{ $match: { "_id": mongoose.Types.ObjectId(roomID) }, }]);
         const result = await Room.findOne({ "_id": roomID }).lean(true);
         return result;
+        
     },
     editRoom: async (hostID, roomID, newData) => {
         // check token for hostID

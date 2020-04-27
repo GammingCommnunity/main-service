@@ -44,14 +44,14 @@ const Rooms = mongoose.Schema({
   code:{
     type:String,
     default:""
-  }
+  },
 })
 
 Rooms.plugin(mongoosePaginate);
-const getRoomLoader = () => new DataLoader((roomID) => {
-  //console.log(roomIDc);
-  
-  return Room.find({ _id: { $in: roomID }});
-})
+const getRoomLoader= () => new DataLoader(
+  (userID,roomID) => {
+    return Room.aggregate([{ $match: { "member": userID, "hostID": { $ne: userID }, "_id": roomID } }]);
+  }
+)
 const Room= mongoose.model('roomList', Rooms);
 module.exports = {Room,getRoomLoader};

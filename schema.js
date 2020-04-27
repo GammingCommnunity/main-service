@@ -21,45 +21,21 @@ const typeDefs = gql`
 
         ## (Deperated) joinRoomChat(roomID:String,userID:String,Info:Info):ResultCRUD
  
-        """ 
-        ***Get list chat private message from userID*** 
-        """
         getPrivateChat(ID:String):[PrivateChat]
-        """
-        ***Get all room chat***
-        """
+
         getAllRoomChat:[RoomChat]
     
-        
-        """
-        *** Get userID that waiting for host to approve
-            spectify ('type')  ***
-        """
         manageRequestJoin_Host(hostID:String!):[ApproveList]
-        """
-            (WIP)
-        """
+
         getPendingJoinRoom_User(userID:String!):[ApproveList]
        
-        """
-            *** get room by hostID, specify hostID to find***
-        """
-        
         roomManage(hostID:String!):[Room]
-          """
-            *** get room by game, specify gameID to find***
-        """
-        
-        
-        
+
         getRoomMessage(roomID:String!):RoomChat
-        
-        
-        
+
         getPrivateMedia(chatID:String):[Media]
         
-        
- 
+
     }
    
     type PrivateChat{
@@ -122,7 +98,6 @@ const typeDefs = gql`
     type Mutation{
 
         
-
         """
             ***Create  a game with 'input'***
         """
