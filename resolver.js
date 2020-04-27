@@ -13,14 +13,16 @@ const { Genres, Platforms, MessageType } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
-const { checkHost, getRoomInfo } = require('./service/roomService');
+const { checkHost, getRoomInfo, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom } = require('./service/roomService');
 const { getGameInfo } = require('./service/gameService');
-const mongoose = require('mongoose');
 var crypto = require("crypto");
 const pubsub = new PubSub();
+
 const JOIN_ROOM = 'JOIN_ROOM';
 const RECIEVE_MESSAGE = 'RECIEVE_MESSAGE';
 const GROUP_MESSAGE = 'GROUP_MESSAGE';
+
+
 module.exports = resolvers = {
     Upload: GraphQLUpload,
     Date: Date,
@@ -28,11 +30,16 @@ module.exports = resolvers = {
     Genres, Platforms, MessageType,
 
     Subscription: {
+
         onJoinRoom: {
             subscribe: withFilter(
                 () => pubsub.asyncIterator([JOIN_ROOM]),
                 (payload, variable) => {
-                    return payload.onJoinRoom.hostID === variable.hostID
+                    if (variable.onJoinRoom.type == 1) {
+                        // user notfication
+
+                    }
+                    else return payload.onJoinRoom.hostID === variable.hostID
                 }
             )
         },
@@ -342,22 +349,15 @@ module.exports = resolvers = {
 
                 return onError('fail', "Create game failed!")
             });
-        }
-        ,
-        async removeRoom(root, { roomID, userID }, context) {
+        },
+        removeRoom: async (root, { roomID, userID }, context) => {
 
             try {
                 /*let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
                 console.log(result);*/
+                var result = await deleteRoom(roomID, userID)
+                return result ? onSuccess("Remove success!") : onError('fail', "Remove failed!")
 
-                if (userID == userID) {
-                    return Room.deleteOne({ "_id": roomID }).then((v) => {
-                        return onSuccess("Remove success!");
-
-                    }).catch((e) => {
-                        return onError('fail', "Remove failed!")
-                    });
-                }
             }
             catch (e) {
                 console.log(e);
@@ -422,6 +422,7 @@ module.exports = resolvers = {
                     else return ApproveList.create(info).then((apporoveResult) => {
 
                         const newComer = {
+                            "type": 2,
                             "roomName": roomInfo.roomName,
                             "hostID": info.hostID,
                             "userID": apporoveResult.userID,
@@ -431,46 +432,28 @@ module.exports = resolvers = {
                         pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
 
                         return onSuccess("Waiting for apporove");;
-
                     })
                 })
-
-
             }
 
         },
         editRoom: async (_, { hostID, roomID, newData }, context) => {
-
-
             try {
                 //let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
-
-
-                if (hostID == hostID) {
-                    return Room.findOneAndUpdate(
-                        { "_id": roomID },
-                        {
-                            $set: {
-                                "roomName": newData.roomName,
-                                "isPrivate": newData.isPrivate,
-                                "description": newData.description,
-                                "member": newData.member,
-                                "maxOfMember": newData.maxOfMember,
-                                "roomBackground": newData.roomBackground,
-                                "roomLogo": newData.roomLogo
-                            }
-                        },
-                        { upsert: true, 'new': true }).then(res => {
-                            return onSuccess("Update success!")
-                        }).catch(err => {
-
-                            return onError('fail', "Somethings wrong during update...")
-                        })
+                var data = {
+                    "roomName": newData.roomName,
+                    "isPrivate": newData.isPrivate,
+                    "description": newData.description,
+                    "member": newData.member,
+                    "maxOfMember": newData.maxOfMember,
+                    "roomBackground": newData.roomBackground,
+                    "roomLogo": newData.roomLogo
                 }
-            } catch (error) {
-                return onError('unAuth', "You have wrong certificate!")
+                var result = await editRoom(hostID, roomID, data);
+                return result ? onSuccess("Update success!") : onError('fail', "Somethings wrong during update...");
+            } catch (err) {
+                return onError('fail', "Somethings wrong during update...")
             }
-
         },
 
         // id_user: id from host message, id_friends
@@ -597,17 +580,23 @@ module.exports = resolvers = {
                 return { status: 200, "success": false, "message": "Create fail!" }
             });
         },
+        confirmUserRequest: async (_, { hostID, userID, roomID }) => {
 
-        confirmUserRequest: async (_, {hostID,userID}) => {
-            var result = await ApproveList.findOne({ "hostID": hostID, "userID": userID });
-            console.log(result);
-            
-        },
-        cancelRequest: async (_, { roomID,userID}) => {
-            
+            var result = await confirmJoinRequest(hostID, userID, roomID);
+            if (result) {
+                return onSuccess("OK")
+            }
+            else return onError("fail","Has error, try again")
+
+
         },
 
-        RmvMbFrRoom: async (root, { type, userID, roomID }) =>{
+        cancelRequest: async (_, { roomID, userID }) => {
+            var result = await deleteJoinRequest(hostID, userID, roomID);
+            return result ? onSuccess("Cancel success") : onError("fail","Has error");
+        },
+
+        RmvMbFrRoom: async (root, { type, userID, roomID }) => {
             if (type == "all") {
                 //removeAllMemberExceptHost
                 return Room.updateMany({ "_id": roomID }, { $pull: { "member": { "member.$[].isHost": false } } }, { multi: true }, (err, raw) => {
