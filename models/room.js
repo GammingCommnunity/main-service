@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 const DataLoader = require('dataloader');
 require('dotenv').config();
+
 const Rooms = mongoose.Schema({
   
   roomName: {
@@ -45,6 +46,7 @@ const Rooms = mongoose.Schema({
     type:String,
     default:""
   },
+  pendingRequest:[String]
 })
 
 Rooms.plugin(mongoosePaginate);

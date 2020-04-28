@@ -14,6 +14,7 @@ module.exports = typeDef = gql`
         roomLogo:String
         roomBackground:String
         isJoin:Boolean
+        isRequest:Boolean
     }
     type gameInfo{
         gameID:String!
