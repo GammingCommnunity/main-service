@@ -14,7 +14,7 @@ module.exports = typeDef = gql`
       member:[String]!
       maxOfMember:Int!
       game:GameInfo
-      roomLogo:String!
-      roomBackground:String!
+      roomLogo:String
+      roomBackground:String
     }
 `

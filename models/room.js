@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 const DataLoader = require('dataloader');
 require('dotenv').config();
-
+var roomLogo = process.env.default_logo;
+var roomBackground = process.env.default_background
 const Rooms = mongoose.Schema({
   
   roomName: {
@@ -35,12 +36,12 @@ const Rooms = mongoose.Schema({
   },
   roomLogo: {
     type: String,
-    default: process.env.default_logo
+    default: roomLogo
     
   },
   roomBackground: {
     type: String,
-    default: process.env.default_background
+    default: roomBackground
   },
   code:{
     type:String,
