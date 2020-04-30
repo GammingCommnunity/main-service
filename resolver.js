@@ -254,7 +254,10 @@ module.exports = resolvers = {
                 
                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
             })
-            return groupSize == "large" ? largeGroup : smallGroup;
+            if (groupSize == "none") {
+                return mapped;
+            }
+            else return groupSize == "large" ? largeGroup : smallGroup;
             //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
         roomManage: async (_, { hostID }) => {
