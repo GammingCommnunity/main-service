@@ -42,4 +42,8 @@ module.exports = typeDef = gql`
         text
         media
     }
+    enum GroupSize{
+        small
+        large
+    }
 `;

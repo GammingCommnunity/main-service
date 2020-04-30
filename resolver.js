@@ -14,8 +14,8 @@ const { Genres, Platforms, MessageType } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');
 const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
-const { checkHost, getRoomInfo,inPendingList, updateRoom, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom, isJoinRoom } = require('./service/roomService');
-const { checkRequestExist,addApprove } = require('./service/requestService');
+const { checkHost, getRoomInfo, inPendingList, updateRoom, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom, isJoinRoom } = require('./service/roomService');
+const { checkRequestExist, addApprove } = require('./service/requestService');
 const { getGameInfo } = require('./service/gameService');
 var crypto = require("crypto");
 const pubsub = new PubSub();
@@ -230,27 +230,31 @@ module.exports = resolvers = {
                 return v;
             })
         },
-        getRoomByGame: async (root, { limit, page, gameID, userID }, { roomLoader }) => {
+        getRoomByGame: async (root, { limit, page, gameID, userID, groupSize }, { roomLoader }) => {
             const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
+            const smallGroup = [];
+            const largeGroup = [];
+
             var mapped = _.forEach(result, async (value) => {
                 // get member
                 var member = _.get(value, "member");
                 var pending = _.get(value, "pendingRequest");
+                var maxOfMember = _.get(value, "maxOfMember");
                 // check if user is member
-                
-                if (_.includes(member, userID) && _.get(value, "hostID") != userID) {
-                    return _.assign(value, { "isJoin": true, "isRequest": false })
-                }
-                if (_.includes(pending,userID)) {
-                    return _.assign(value, { "isJoin": false,"isRequest":true})
 
+                if (_.includes(member, userID) && _.get(value, "hostID") != userID) {
+                    _.assign(value, { "isJoin": true, "isRequest": false })
+                }
+                if (_.includes(pending, userID)) {
+                    _.assign(value, { "isJoin": false, "isRequest": true })
                 }
                 else {
-                    return _.assign(value, { "isJoin": false, "isRequest": false })
+                    _.assign(value, { "isJoin": false, "isRequest": false })
                 }
-
+                
+                return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
             })
-            return mapped;
+            return groupSize == "large" ? largeGroup : smallGroup;
             //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
         roomManage: async (_, { hostID }) => {
@@ -438,7 +442,7 @@ module.exports = resolvers = {
                 var roomInfo = await getRoomInfo(roomID);
                 const isRequest = await checkRequestExist(roomID, currentID);
                 const inPending = await inPendingList(roomID, currentID); // has value in pendingRequest
-                
+
                 // check already a member
                 if (await isJoinRoom(roomID, currentID)) {
                     return onError('fail', "You are member!")
@@ -447,11 +451,11 @@ module.exports = resolvers = {
                 else if (isRequest || inPending) {
                     return onError('fail', "You has been requested to join room, choose another room")
                 }
-                    // add to approve
+                // add to approve
                 else {
                     const apporoveResult = await addApprove(info);
                     if (_ != null) {
-                        const _ = await updateRoom("", roomID, { $push: { "pendingRequest": currentID }});
+                        const _ = await updateRoom("", roomID, { $push: { "pendingRequest": currentID } });
                         const newComer = {
                             "type": 2,
                             "roomName": roomInfo.roomName,
@@ -464,7 +468,7 @@ module.exports = resolvers = {
 
                         return onSuccess("Waiting for apporove");
                     }
-                    return onSuccess("fail","Has error")
+                    return onSuccess("fail", "Has error")
                 }
 
             }

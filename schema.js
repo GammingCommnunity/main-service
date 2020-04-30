@@ -67,6 +67,7 @@ const typeDefs = gql`
         userID:String
         roomID:String
         isApprove:Boolean
+        joinTime:Date
     }
     
 

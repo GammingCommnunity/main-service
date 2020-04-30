@@ -38,7 +38,7 @@ module.exports = typeDef = gql`
         findRoomByName(room_name:String!):[Room]
         getRoomCreateByUser(userID:String):[Room]
         changeHost(oldHost:String!,newHost:String!):[Room]
-        getRoomByGame(limit:Int!,page:Int!,gameID:String!,userID:String!):[Room]
+        getRoomByGame(limit:Int!,page:Int!,gameID:String!,userID:String!,groupSize:GroupSize):[Room]
         getRoomJoin(userID:String):[Room]
         getRoomMedia(roomID:String):[Media]
         inviteToRoom(hostID:String,roomID:String):ResultCRUD
