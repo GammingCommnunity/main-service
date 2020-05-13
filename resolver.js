@@ -16,7 +16,8 @@ const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const { checkHost, getRoomInfo, inPendingList, updateRoom, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom, isJoinRoom } = require('./service/roomService');
 const { checkRequestExist, addApprove } = require('./service/requestService');
-const { getGameInfo } = require('./service/gameService');
+const { getGameInfo } = require('./service/gameService'); 
+const {getUserID } = require('./src/util');
 var crypto = require("crypto");
 const pubsub = new PubSub();
 
@@ -109,11 +110,16 @@ module.exports = resolvers = {
 
             return Room.find({ "roomName": { '$regex': room_name, $options: 'i' } });
         },
-        async getRoomCreateByUser(root, { userID }) {
-            return Room.aggregate([{ $match: { "hostID": userID } }]);
+        async getRoomCreateByUser(root, { userID }, context) {
+            var accountID = getUserID(context);
+          
+            
+                        
+            return Room.aggregate([{ $match: { "hostID": accountID } }]);
         },
-        async getRoomJoin(_, { userID }) {
-            return Room.find({ "member": { "$in": [userID] } });
+        async getRoomJoin(_, { userID }, context) {
+            var accountID = getUserID(context);
+            return Room.find({ "member": { "$in": [accountID] } });
         },
         /* async joinRoomChat(root, { id_room, id_user }) {
              return RoomChat.findOneAndUpdate({ "id_room": id_room }, { $push: { member: v } }, { upsert: true, new: true }).then(value => {
@@ -226,11 +232,14 @@ module.exports = resolvers = {
         },
         // show ra nhung phong user dang cho duoc duyet 
         getPendingJoinRoom_User: async (root, { userID }, context) => {
-            return ApproveList.aggregate([{ $match: { "userID": userID } }]).then((v) => {
+            var accountID = getUserID(context);
+
+            return ApproveList.aggregate([{ $match: { "userID": accountID } }]).then((v) => {
                 return v;
             })
         },
         getRoomByGame: async (root, { limit, page, gameID, userID, groupSize }, { roomLoader }) => {
+            var accountID = getUserID(context);
             const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
             const largeGroup = [];
@@ -242,10 +251,10 @@ module.exports = resolvers = {
                 var maxOfMember = _.get(value, "maxOfMember");
                 // check if user is member
 
-                if (_.includes(member, userID) && _.get(value, "hostID") != userID) {
+                if (_.includes(member, accountID) && _.get(value, "hostID") != accountID) {
                     _.assign(value, { "isJoin": true, "isRequest": false })
                 }
-                if (_.includes(pending, userID)) {
+                if (_.includes(pending, accountID)) {
                     _.assign(value, { "isJoin": false, "isRequest": true })
                 }
                 else {
@@ -261,7 +270,9 @@ module.exports = resolvers = {
             //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
         roomManage: async (_, { hostID }) => {
-            return Room.aggregate([{ $match: { "hostID": hostID } }]);
+            var accountID = getUserID(context);
+
+            return Room.aggregate([{ $match: { "hostID": accountID } }]);
         },
         getSummaryByGameID: async (_, { gameID }) => {
             return ListGame.find({ "_id": gameID }).lean();
@@ -348,7 +359,9 @@ module.exports = resolvers = {
         inviteToRoom: async (_, { hostID, roomID }) => {
             // double of randombytes
             let r = crypto.randomBytes(3).toString('hex');
-            if (checkHost(roomID, hostID)) {
+            var accountID = getUserID(context);
+
+            if (checkHost(roomID, accountID)) {
                 // true, add code to that room
                 return Room.updateOne({ "_id": roomID }, { "code": r }).then((v) => {
                     return onSuccess("Successful generate code !", r)
@@ -380,11 +393,12 @@ module.exports = resolvers = {
             });
         },
         removeRoom: async (root, { roomID, userID }, context) => {
-
+            var accountID = getUserID(context);
+ 
             try {
                 /*let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
                 console.log(result);*/
-                var result = await deleteRoom(roomID, userID)
+                var result = await deleteRoom(roomID, accountID)
                 return result ? onSuccess("Remove success!") : onError('fail', "Remove failed!")
 
             }
@@ -395,37 +409,24 @@ module.exports = resolvers = {
             }
         },
         createRoom: async (_, { roomInput, roomChatInput, userID }, context) => {
-
-            try {
-                /*let result = verify(context.token,process.env.SECRET_KEY, { algorithms: "HS512" });
-                console.log("asdasd",context);*/
-
-                if (userID == userID) {
-                    return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
-                        if (v.length > 0) {
-                            return onError('fail', "This name already taken")
-                        }
-                        else return Room.create(roomInput).then(async (value) => {
-                            return RoomChats.create(roomChatInput).then(async (v) => {
-                                return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
-                                    return onSuccess("Create success!", value._id)
-                                })
-
-                            })
-                        }).catch(err => {
-                            console.log(err);
-
-                            return onError("Create failed!")
-                        })
-                    })
-
+            var accountID = getUserID(context);
+            return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
+                if (v.length > 0) {
+                    return onError('fail', "This name already taken")
                 }
-                else return onError('unAuth', "You have wrong certificate!")
-            } catch (error) {
-                console.log(error);
+                else return Room.create(roomInput).then(async (value) => {
+                    return RoomChats.create(roomChatInput).then(async (v) => {
+                        return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
+                            return onSuccess("Create success!", value._id)
+                        })
 
-                return new AuthenticationError("Wrong token");
-            }
+                    })
+                }).catch(err => {
+                    console.log(err);
+
+                    return onError("Create failed!")
+                })
+            })
         },
 
 
@@ -437,17 +438,19 @@ module.exports = resolvers = {
          */
         async joinRoom(root, { roomID, currentID, info }) {
             //check userID is not host
-            if (await checkHost(roomID, currentID)) {
+            var accountID = getUserID(context);
+
+            if (await checkHost(roomID, accountID)) {
                 return onError('fail', "You are host");
             }
             else {
 
                 var roomInfo = await getRoomInfo(roomID);
-                const isRequest = await checkRequestExist(roomID, currentID);
-                const inPending = await inPendingList(roomID, currentID); // has value in pendingRequest
+                const isRequest = await checkRequestExist(roomID, accountID);
+                const inPending = await inPendingList(roomID, accountID); // has value in pendingRequest
 
                 // check already a member
-                if (await isJoinRoom(roomID, currentID)) {
+                if (await isJoinRoom(roomID, accountID)) {
                     return onError('fail', "You are member!")
                 }
                 // check if in pending or has request
@@ -458,7 +461,7 @@ module.exports = resolvers = {
                 else {
                     const apporoveResult = await addApprove(info);
                     if (_ != null) {
-                        const _ = await updateRoom("", roomID, { $push: { "pendingRequest": currentID } });
+                        const _ = await updateRoom("", roomID, { $push: { "pendingRequest": accountID } });
                         const newComer = {
                             "type": 2,
                             "roomName": roomInfo.roomName,
@@ -479,7 +482,8 @@ module.exports = resolvers = {
         },
         editRoom: async (_, { hostID, roomID, newData }, context) => {
             try {
-                //let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
+                var accountID = getUserID(context);
+
                 var data = {
                     "roomName": newData.roomName,
                     "isPrivate": newData.isPrivate,
@@ -489,7 +493,7 @@ module.exports = resolvers = {
                     "roomBackground": newData.roomBackground,
                     "roomLogo": newData.roomLogo
                 }
-                var result = await editRoom(hostID, roomID, data);
+                var result = await editRoom(accountID, roomID, data);
                 return result ? onSuccess("Update success!") : onError('fail', "Somethings wrong during update...");
             } catch (err) {
                 return onError('fail', "Somethings wrong during update...")
@@ -497,8 +501,9 @@ module.exports = resolvers = {
         },
 
         // id_user: id from host message, id_friends
-        async addMember(root, { roomID, userID }) {
-            return Room.findByIdAndUpdate(roomID, { $push: { member: userID } }, { upsert: true, new: true }).then(result => {
+        async addMember(root, { roomID, memberID }) {
+            
+            return Room.findByIdAndUpdate(roomID, { $push: { member: memberID } }, { upsert: true, new: true }).then(result => {
                 console.log(result);
                 if (value) {
                     return onSuccess("Add success!")
@@ -539,15 +544,17 @@ module.exports = resolvers = {
         },
         async chatPrivate(root, { currentUserID, friendID, input }) {
             //condition 1: sender is current User
+            var accountID = getUserID(context);
+
             return ChatPrivate.findOneAndUpdate(
-                { $and: [{ "currentUser.id": currentUserID }, { $and: [{ "friend.id": friendID }] }] }, { $push: { messages: input } }
+                { $and: [{ "currentUser.id": accountID }, { $and: [{ "friend.id": friendID }] }] }, { $push: { messages: input } }
             ).then(async (v) => {
 
                 console.log("Here" + v);
                 // condition 2: sender is guest.
                 if (v == null) {
                     return ChatPrivate.findOneAndUpdate(
-                        { $and: [{ "friend.id": currentUserID }, { $and: [{ "currentUser.id": friendID }] }] }, { $push: { messages: input } }
+                        { $and: [{ "friend.id": accountID }, { $and: [{ "currentUser.id": friendID }] }] }, { $push: { messages: input } }
                     )
                         .then(async (value) => {
                             // mean conversation is not avaiable... notify user to craete new 
@@ -593,9 +600,10 @@ module.exports = resolvers = {
             return await GlobalRoom.create(input);
         },*/
         deleteMessage: async (root, { currentUserID, friendID, messageID }) => {
+            var accountID = getUserID(context);
             return ChatPrivate.findOneAndUpdate(
                 {
-                    $and: [{ "currentUser.id": currentUserID },
+                    $and: [{ "currentUser.id": accountID },
                     { $and: [{ "friend.id": friendID }] }]
                 },
                 { $pull: { "messages": { _id: messageID } } },
@@ -620,9 +628,9 @@ module.exports = resolvers = {
                 return { status: 200, "success": false, "message": "Create fail!" }
             });
         },
-        confirmUserRequest: async (_, { hostID, userID, roomID }) => {
+        confirmUserRequest: async (_, { hostID, requestID, roomID }) => {
 
-            var result = await confirmJoinRequest(hostID, userID, roomID);
+            var result = await confirmJoinRequest(hostID, requestID, roomID);
 
             if (result) {
                 return onSuccess("OK")
@@ -632,12 +640,12 @@ module.exports = resolvers = {
 
         },
 
-        cancelRequest: async (_, { hostID, roomID, userID }) => {
-            var result = await deleteJoinRequest(hostID, userID, roomID);
+        cancelRequest: async (_, { hostID, roomID, requestID }) => {
+            var result = await deleteJoinRequest(hostID, requestID, roomID);
             return result ? onSuccess("Cancel success") : onError("fail", "Has error");
         },
 
-        RmvMbFrRoom: async (root, { type, userID, roomID }) => {
+        RmvMbFrRoom: async (root, { type, memberID, roomID }) => {
             if (type == "all") {
                 //removeAllMemberExceptHost
                 return Room.updateMany({ "_id": roomID }, { $pull: { "member": { "member.$[].isHost": false } } }, { multi: true }, (err, raw) => {
@@ -651,7 +659,7 @@ module.exports = resolvers = {
                 });
             } else if (type == "once") {
                 //remove specify member
-                return Room.findOneAndUpdate({ _id: idRoom }, { $pull: { "member": { "_id": { $in: [userID] } } } }, { rawResult: true }).then(value => {
+                return Room.findOneAndUpdate({ _id: idRoom }, { $pull: { "member": { "_id": { $in: [memberID] } } } }, { rawResult: true }).then(value => {
                     console.log(value);
                     if (value) { return { "data": value, "result": true } }
                 }).catch(err => {

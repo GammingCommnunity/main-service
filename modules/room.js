@@ -44,7 +44,7 @@ module.exports = typeDef = gql`
         inviteToRoom(hostID:String,roomID:String):ResultCRUD
    }
    extend type Mutation{
-        RmvMbFrRoom(type:String!,userID:String,roomID:String):ResultCRUD
+        RmvMbFrRoom(type:String!,memberID:String,roomID:String):ResultCRUD
         """
             ***Create  a room with 'input'***
         """
@@ -74,7 +74,7 @@ module.exports = typeDef = gql`
         """ 
         ***Add member to room (require token)***
         """
-        addMember(roomID:String!,userID:String!):ResultCRUD
+        addMember(roomID:String!,memberID:String!):ResultCRUD
    
    }
    

@@ -62,9 +62,9 @@ module.exports = {
         if (result.ok == 1) return true;
         return false;
     },
-    confirmJoinRequest: async (hostID, userID, roomID) => {
+    confirmJoinRequest: async (hostID, requestID, roomID) => {
         var result = await ApproveList.deleteOne({
-            "hostID": hostID, "userID": userID,
+            "hostID": hostID, "userID": requestID,
             "roomID": roomID
         });
         if (result.ok == 1) {

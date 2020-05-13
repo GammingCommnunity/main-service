@@ -1,4 +1,4 @@
-const { ApolloServer } = require('apollo-server-express');
+const { ApolloServer,AuthenticationError } = require('apollo-server-express');
 const { MemcachedCache } = require('apollo-server-cache-memcached')
 const mongoose = require('mongoose');
 const Schema = require('./schema');
@@ -25,30 +25,27 @@ const server = new ApolloServer({
             ['memcached-server-1', 'memcached-server-2', 'memcached-server-3'],
             { retries: 10, retry: 10000 })
     },
-    
-    context: ({ req }) => {
+
+    context: async ({ req, res }) => {
         const token = req.headers.token || null;
+        const errorInfo = {
+            "message": "Wrong token!",
+            "status":"400"
+        }
+        var info = JSON.parse(res.info);
+
+        if (info.status != "SUCCESSFUL") {
+            return res.json(errorInfo)
+        }
+
         return {
-            token,
+            authInfo:info.data,
             dataloaders: {
                 roomLoader: getRoomLoader(),
                 listGameLoader: getListGameLoader()
             }
         };
-        //console.log(process.env.SECRET_KEY);
-        /*if(!token){
-             throw new AuthenticationError('No token provided !');
-            
-        }
-        else{
-         try {
-             let result= verify(token,process.env.SECRET_KEY);
-             //check id_user == result.id_user
-             if(result) return {token};
-            } catch (error) {
-             throw new AuthenticationError("There is problem with your Token, please check again ... ")
-            }
-        }*/
+
 
     }
 
@@ -77,8 +74,8 @@ const server = new ApolloServer({
 const port = process.env.PORT || 4000;
 const app = express();
 app.use(cors())
-app.use( checkSession);
-server.applyMiddleware({ app, path:"/graphql" })
+app.use(checkSession);
+server.applyMiddleware({ app, path: "/graphql" })
 const httpServer = createServer(app);
 server.installSubscriptionHandlers(httpServer);
 httpServer.listen(port, () => {
