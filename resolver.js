@@ -238,7 +238,7 @@ module.exports = resolvers = {
                 return v;
             })
         },
-        getRoomByGame: async (root, { limit, page, gameID, userID, groupSize }, { roomLoader }) => {
+        getRoomByGame: async (root, { limit, page, gameID, userID, groupSize }, { roomLoader },context) => {
             var accountID = getUserID(context);
             const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
@@ -269,7 +269,7 @@ module.exports = resolvers = {
             else return groupSize == "large" ? largeGroup : smallGroup;
             //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
-        roomManage: async (_, { hostID }) => {
+        roomManage: async (_, { hostID },context) => {
             var accountID = getUserID(context);
 
             return Room.aggregate([{ $match: { "hostID": accountID } }]);
@@ -277,7 +277,7 @@ module.exports = resolvers = {
         getSummaryByGameID: async (_, { gameID }) => {
             return ListGame.find({ "_id": gameID }).lean();
         },
-        countRoomOnEachGame: async (_, { sort }) => {
+        countRoomOnEachGame: async (_, { sort },context) => {
             return ListGame.find({}).select("name game").lean().then(async (v) => {
                 console.log(v);
 
@@ -356,7 +356,7 @@ module.exports = resolvers = {
 
             });
         },
-        inviteToRoom: async (_, { hostID, roomID }) => {
+        inviteToRoom: async (_, { hostID, roomID },context) => {
             // double of randombytes
             let r = crypto.randomBytes(3).toString('hex');
             var accountID = getUserID(context);
@@ -436,7 +436,7 @@ module.exports = resolvers = {
          * @param {roomID} "room user join" 
          * @param {Info} "info need for approve list"
          */
-        async joinRoom(root, { roomID, currentID, info }) {
+        async joinRoom(root, { roomID, currentID, info },context) {
             //check userID is not host
             var accountID = getUserID(context);
 
@@ -542,7 +542,7 @@ module.exports = resolvers = {
                 return {"data":result,"result":true}
             }).catch(err=>{return {"data":err,"result":false}});*/
         },
-        async chatPrivate(root, { currentUserID, friendID, input }) {
+        async chatPrivate(root, { currentUserID, friendID, input },context) {
             //condition 1: sender is current User
             var accountID = getUserID(context);
 
@@ -599,7 +599,7 @@ module.exports = resolvers = {
         /*async createChatGlobal(root, { input }) {
             return await GlobalRoom.create(input);
         },*/
-        deleteMessage: async (root, { currentUserID, friendID, messageID }) => {
+        deleteMessage: async (root, { currentUserID, friendID, messageID },context) => {
             var accountID = getUserID(context);
             return ChatPrivate.findOneAndUpdate(
                 {
