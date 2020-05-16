@@ -1,33 +1,46 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
-const ChatPrivate = mongoose.Schema({
-    
-    currentUser: {
-        id:String,
-        profile_url:String
+var aggregatePaginate = require('mongoose-aggregate-paginate-v2');
+
+const messageSchema = mongoose.Schema({
+    id: String,
+    messageType: {
+        type: String,
+        required: true
     },
-    friend: {
-        id: String,
-        profile_url: String
+    status: {
+        type: String,
+        default:"SEND"
     },
-    messages:[
-        {
-            messageType: {
-                type: String,
-                required: true
-            },
-            id:String,
-            text:{
-                
-            },
-            createAt:{
-                type:Date,
-                default:Date.now()
-            }
+    text: {
+        content: String,
+        height: {
+            default: 0,
+            type: Number
+        },
+        width: {
+            default: 0,
+            type: Number
         }
+    },
+    createAt: {
+        type: Date,
+        default: Date.now()
+    }
+
+})
+
+const ChatPrivate = mongoose.Schema({
+
+    member:[String],
+    messages: [
+        messageSchema
     ]
-    
-}
-);
-ChatPrivate.plugin(mongoosePaginate);
+
+});
+ChatPrivate.virtual('chatID').get(function () {
+    return this._id;
+});
+messageSchema.plugin(aggregatePaginate);
+ChatPrivate.plugin(aggregatePaginate);
 module.exports = mongoose.model('chatPrivate', ChatPrivate);

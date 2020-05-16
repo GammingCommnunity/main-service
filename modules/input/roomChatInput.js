@@ -8,9 +8,7 @@ module.exports = typeDef = gql`
     
 input MessageInput{
     messageType: MessageType
-    id: String
     text: Custom!
-    createAt: Date
 }
  input RoomChatInput{
         roomID:String
@@ -20,7 +18,6 @@ input MessageInput{
         messages:[
             MessageInput
         ]
-        createAt:Date
     }
 
 `

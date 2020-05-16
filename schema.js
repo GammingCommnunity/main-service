@@ -21,7 +21,6 @@ const typeDefs = gql`
 
         ## (Deperated) joinRoomChat(roomID:String,userID:String,Info:Info):ResultCRUD
  
-        getPrivateChat(ID:String):[PrivateChat]
 
         getAllRoomChat:[RoomChat]
     
@@ -37,16 +36,7 @@ const typeDefs = gql`
         
 
     }
-   
-    type PrivateChat{
-        _id:ID
-        currentUser:Profile
-        friend:Profile
-        messages:[
-            PrivateChatMessages
-        ]
-    }
-    
+  
     type PrivateChatMessages{
         _id:ID
         messageType:String
@@ -54,9 +44,6 @@ const typeDefs = gql`
         text:TextMessageType,
         createAt:Date
     }
-
-
-    
     type File {
         filename: String!
         mimetype: String!

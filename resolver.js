@@ -1,5 +1,6 @@
 require('dotenv').config();
 var cloudinary = require('cloudinary').v2;
+const mongoose = require('mongoose');
 const { Room } = require('./models/room')
 const RoomChats = require('./models/chat_room');
 const { ListGame } = require('./models/list_game');
@@ -16,8 +17,8 @@ const { onError, onSuccess } = require('./src/error_handle');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const { checkHost, getRoomInfo, inPendingList, updateRoom, confirmJoinRequest, deleteJoinRequest, deleteRoom, editRoom, isJoinRoom } = require('./service/roomService');
 const { checkRequestExist, addApprove } = require('./service/requestService');
-const { getGameInfo } = require('./service/gameService'); 
-const {getUserID } = require('./src/util');
+const { getGameInfo } = require('./service/gameService');
+const { getUserID } = require('./src/util');
 var crypto = require("crypto");
 const pubsub = new PubSub();
 
@@ -79,11 +80,50 @@ module.exports = resolvers = {
                 return null;
             })
         },
-        async getPrivateChat(root, { ID }) {
-            // cond 1: ID is the host
+        async getAllPrivateChat(_, { }, context) {
+            var accountID = getUserID(context);
+            return ChatPrivate.find({ 'member': accountID }).select('_id member')
+        },
+
+        async getPrivateChat(root, { chatID, limit, page = 1 }, context) {
+            var accountID = getUserID(context);
+            const options = {
+                page: 1,
+                limit: limit,
+
+            };
+            var myAggresgate = ChatPrivate.aggregate([
+                // {
+
+                //      $and: [
+                //          { $or: [{ "currentUser.id": accountID }, { "friend.id": accountID }] },
+                //      ],
+                // },
+                //{ $or: [{ "currentUser.id": accountID }, { "friend.id": accountID }] },
+                { $match: { '_id': new mongoose.Types.ObjectId(chatID) } },
+                { $unwind: "$messages" },
+                { $skip: page <= 1 ? 0 : (page * 10) },
+                {$limit:limit},
+                {
+                    $group: {
+                        _id: '$_id',
+                        message: { $push: '$messages' },
+                    }
+                },
+
+
+            ])
+            return ChatPrivate.aggregatePaginate(
+                myAggresgate).then((v) => {
+
+                    return v.docs[0].message
+
+                })
+           /* // cond 1: ID is the host
+
             return ChatPrivate.find({
                 $and: [
-                    { $or: [{ "currentUser.id": ID }, { "friend.id": ID }] },
+                    { $or: [{ "currentUser.id": accountID }, { "friend.id": accountID }] },
                 ]
             }).then(async (v) => {
                 return v
@@ -98,9 +138,6 @@ module.exports = resolvers = {
 
         },
 
-        async getAllRoomChat() {
-            return await RoomChat.find();
-        },
 
         async changeHost(root, { oldHost, newHost }) {
 
@@ -112,9 +149,7 @@ module.exports = resolvers = {
         },
         async getRoomCreateByUser(root, { userID }, context) {
             var accountID = getUserID(context);
-          
-            
-                        
+
             return Room.aggregate([{ $match: { "hostID": accountID } }]);
         },
         async getRoomJoin(_, { userID }, context) {
@@ -238,7 +273,7 @@ module.exports = resolvers = {
                 return v;
             })
         },
-        getRoomByGame: async (root, { limit, page, gameID, userID, groupSize }, { roomLoader },context) => {
+        getRoomByGame: async (root, { limit, page, gameID, userID, groupSize }, context) => {
             var accountID = getUserID(context);
             const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
@@ -260,7 +295,7 @@ module.exports = resolvers = {
                 else {
                     _.assign(value, { "isJoin": false, "isRequest": false })
                 }
-                
+
                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
             })
             if (groupSize == "none") {
@@ -269,7 +304,7 @@ module.exports = resolvers = {
             else return groupSize == "large" ? largeGroup : smallGroup;
             //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
-        roomManage: async (_, { hostID },context) => {
+        roomManage: async (_, { hostID }, context) => {
             var accountID = getUserID(context);
 
             return Room.aggregate([{ $match: { "hostID": accountID } }]);
@@ -277,7 +312,7 @@ module.exports = resolvers = {
         getSummaryByGameID: async (_, { gameID }) => {
             return ListGame.find({ "_id": gameID }).lean();
         },
-        countRoomOnEachGame: async (_, { sort },context) => {
+        countRoomOnEachGame: async (_, { sort }, context) => {
             return ListGame.find({}).select("name game").lean().then(async (v) => {
                 console.log(v);
 
@@ -356,7 +391,7 @@ module.exports = resolvers = {
 
             });
         },
-        inviteToRoom: async (_, { hostID, roomID },context) => {
+        inviteToRoom: async (_, { hostID, roomID }, context) => {
             // double of randombytes
             let r = crypto.randomBytes(3).toString('hex');
             var accountID = getUserID(context);
@@ -394,7 +429,7 @@ module.exports = resolvers = {
         },
         removeRoom: async (root, { roomID, userID }, context) => {
             var accountID = getUserID(context);
- 
+
             try {
                 /*let result = verify(context.token, process.env.secret_key_jwt, { algorithms: "HS512" });
                 console.log(result);*/
@@ -436,7 +471,7 @@ module.exports = resolvers = {
          * @param {roomID} "room user join" 
          * @param {Info} "info need for approve list"
          */
-        async joinRoom(root, { roomID, currentID, info },context) {
+        async joinRoom(root, { roomID, currentID, info }, context) {
             //check userID is not host
             var accountID = getUserID(context);
 
@@ -502,7 +537,7 @@ module.exports = resolvers = {
 
         // id_user: id from host message, id_friends
         async addMember(root, { roomID, memberID }) {
-            
+
             return Room.findByIdAndUpdate(roomID, { $push: { member: memberID } }, { upsert: true, new: true }).then(result => {
                 console.log(result);
                 if (value) {
@@ -542,19 +577,18 @@ module.exports = resolvers = {
                 return {"data":result,"result":true}
             }).catch(err=>{return {"data":err,"result":false}});*/
         },
-        async chatPrivate(root, { currentUserID, friendID, input },context) {
+        async chatPrivate(root, { currentUserID, friendID, input }, context) {
             //condition 1: sender is current User
             var accountID = getUserID(context);
 
+            var message = _.assign({}, input, { id: accountID })
             return ChatPrivate.findOneAndUpdate(
-                { $and: [{ "currentUser.id": accountID }, { $and: [{ "friend.id": friendID }] }] }, { $push: { messages: input } }
+                { $and: [{ "member": accountID }, { $and: [{ "member": friendID }] }] }, { $push: { messages: message } }
             ).then(async (v) => {
-
-                console.log("Here" + v);
                 // condition 2: sender is guest.
                 if (v == null) {
                     return ChatPrivate.findOneAndUpdate(
-                        { $and: [{ "friend.id": accountID }, { $and: [{ "currentUser.id": friendID }] }] }, { $push: { messages: input } }
+                        { $and: [{ "member": accountID }, { $and: [{ "member": friendID }] }] }, { $push: { messages: message } }
                     )
                         .then(async (value) => {
                             // mean conversation is not avaiable... notify user to craete new 
@@ -589,17 +623,21 @@ module.exports = resolvers = {
             });
         },
 
-        async createPrivateChat(root, { input }) {
-            return ChatPrivate.create(input).then((v) => {
+        async createPrivateChat(root, { input }, context) {
+
+            var currentID = getUserID(context);
+            var member = [`${currentID}`, input.friendID];
+
+            var newInput = _.assign({}, input, { "member": member });
+
+            return ChatPrivate.create(newInput).then((v) => {
                 return onSuccess("Create success!")
             }).catch((v) => {
                 return onError('fail', "Create fail...")
             });
         },
-        /*async createChatGlobal(root, { input }) {
-            return await GlobalRoom.create(input);
-        },*/
-        deleteMessage: async (root, { currentUserID, friendID, messageID },context) => {
+
+        deleteMessage: async (root, { currentUserID, friendID, messageID }, context) => {
             var accountID = getUserID(context);
             return ChatPrivate.findOneAndUpdate(
                 {

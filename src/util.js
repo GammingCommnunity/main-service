@@ -1,5 +1,5 @@
 module.exports = {
     getUserID: (data) => {
-        return data.authInfo.accountId;
+        return `${data.authInfo.accountId}`;
     }
 }
