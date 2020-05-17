@@ -1,6 +1,6 @@
 const { gql } = require('apollo-server');
 module.exports = typeDef = gql`
- input ProfileInput{
+    input ProfileInput{
         id:String
         profile_url:String
     }
@@ -14,7 +14,7 @@ module.exports = typeDef = gql`
         imageUrl: String,
         blur: String
     }
- input GameInput{
+    input GameInput{
         _id:ID
         name:String! 
         genres:[Genres]

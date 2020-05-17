@@ -12,6 +12,11 @@ module.exports = {
             return false;
         }
     },
+    getHostID: async (roomID) => {
+        var result = await Room.findOne({ "_id": roomID }).select('hostID');
+        console.log(result);
+        
+    },
     isJoinRoom: async (roomID, userID) => {
         var result = await Room.aggregate([{ $match: { "member": { $in: [userID]}, "hostID": { $ne: userID }, "_id": roomID } }]);
         return result.length == 1 ? true : false;

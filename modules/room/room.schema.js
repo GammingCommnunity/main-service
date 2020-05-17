@@ -1,6 +1,6 @@
 const { gql } = require('apollo-server');
 module.exports = typeDef = gql`
-   type Room{
+    type Room{
         _id:ID!
         roomName:String!
         hostID:String
@@ -20,30 +20,25 @@ module.exports = typeDef = gql`
         gameID:String!
         gameName:String!
     }
-   type RoomMessage{
-        _id: ID
-        messageType: String
-        id: String
-        text: TextMessageType,
-        createAt: Date
-    }
+   
 
    extend type Query{
-       """
+        """
         *** Support paginate, page is number of page u want to show value, 
         limit is number of values in one page ***
-    """
+        """
         getAllRoom(page:Int!,limit:Int!):[Room]
         getRoomInfo(roomID:String):Room
         findRoomByName(room_name:String!):[Room]
-        getRoomCreateByUser(userID:String):[Room]
+        getRoomCreateByUser:[Room]
         changeHost(oldHost:String!,newHost:String!):[Room]
-        getRoomByGame(limit:Int!,page:Int!,gameID:String!,userID:String,groupSize:GroupSize):[Room]
+        getRoomByGame(limit:Int!,page:Int!,gameID:String!,groupSize:GroupSize):[Room]
         getRoomJoin(userID:String):[Room]
         getRoomMedia(roomID:String):[Media]
         inviteToRoom(hostID:String,roomID:String):ResultCRUD
+        roomManager:[Room]
    }
-   extend type Mutation{
+   type Mutation{
         RmvMbFrRoom(type:String!,memberID:String,roomID:String):ResultCRUD
         """
             ***Create  a room with 'input'***
@@ -61,10 +56,7 @@ module.exports = typeDef = gql`
         """
         removeRoom(roomID:ID!,userID:String!):ResultCRUD
         chatRoom(roomID:String!,messages:MessageInput):ResultCRUD
-        joinRoom(
-            roomID:String!,
-            currentID:String!,
-            info:Info!):ResultCRUD
+        joinRoom(roomID:String!):ResultCRUD
         
         """ 
         ***Edit room info***
@@ -77,6 +69,11 @@ module.exports = typeDef = gql`
         addMember(roomID:String!,memberID:String!):ResultCRUD
    
    }
-   
-
-`;
+`
+// type RoomMessage{
+//     _id: ID
+//     messageType: String
+//     id: String
+//     text: TextMessageType,
+//     createAt: Date
+// }

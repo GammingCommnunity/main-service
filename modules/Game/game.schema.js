@@ -1,6 +1,18 @@
 const { gql } = require('apollo-server');
-module.exports = typeDef = gql`
-type Game{
+module.exports = typeDefs = gql`
+    type Media{
+        text:String,
+        createAt:Date
+    }
+    type ImageType{
+        imageUrl: String,
+        blur: String
+    }
+    type VideoType{
+        trailer:String
+        gameplay:[String]
+    }
+    type Game{
         _id:ID!
         name:String
         genres:[String]
@@ -30,5 +42,10 @@ type Game{
         getSummaryByGameID(gameID:String!):[Game]
         countRoomOnEachGame(sort:SortEnum!):[Game]
     }
-
+    extend type Mutation{
+        """
+            ***Create  a game with 'input'***
+        """
+        createGame(input:GameInput):ResultCRUD
+    }
 `

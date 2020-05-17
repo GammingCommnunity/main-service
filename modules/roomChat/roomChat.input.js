@@ -6,11 +6,11 @@ module.exports = typeDef = gql`
         width:Float
     }
     
-input MessageInput{
-    messageType: MessageType
-    text: Custom!
-}
- input RoomChatInput{
+    input MessageInput{
+        messageType: MessageType
+        text: Custom!
+    }
+    input RoomChatInput{
         roomID:String
         member:[
             String
