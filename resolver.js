@@ -6,7 +6,6 @@ const RoomChats = require('./models/chat_room');
 const { ListGame } = require('./models/list_game');
 const ChatPrivate = require('./models/chat_private/chat_private');
 const { GraphQLUpload } = require('graphql-upload');
-const { AuthenticationError } = require('apollo-server')
 const { sign, verify } = require('jsonwebtoken');
 const { Genres, Platforms, MessageType } = require('./src/enum');
 const { GamesRadars, PCGamer } = require('./models/News/News');

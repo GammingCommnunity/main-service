@@ -1,3 +1,4 @@
+const ListGame = require('apollo-server');
 module.exports = gameResolvers = {
 
     Query: {
