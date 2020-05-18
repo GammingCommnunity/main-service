@@ -44,7 +44,6 @@ module.exports = typeDef = gql`
             ***Create  a room with 'input'***
         """
         createRoom(
-            userID:String,
             roomInput: RoomInput,
             roomChatInput:RoomChatInput):ResultCRUD
          

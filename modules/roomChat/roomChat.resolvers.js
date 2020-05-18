@@ -2,10 +2,14 @@ const RoomChats = require('../../models/chat_room');
 const {getUserID} = require('../../src/util')
 const mongoose = require('mongoose');
 const { onError, onSuccess } = require('../../src/error_handle');
+const { checkHost} = require('../../service/roomService');
+/*----------------------------------------------------------------------*/
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const pubsub = new PubSub();
 const GROUP_MESSAGE = 'GROUP_MESSAGE';
+/*----------------------------------------------------------------------*/
 
+const _ = require('lodash');
 module.exports = resolvers = {
     Query: {
         getRoomMessage: async (root, { roomID, limit, page = 1 }, context) => {
@@ -35,17 +39,24 @@ module.exports = resolvers = {
 
             });
         },
+        getAllRoomChat: async (_, { }, context) => {
+            var accountID = getUserID(context);
+            var isHost = checkHost(accountID)
+       
+            return RoomChats.find({"member":{$in:accountID}})
+        }
     },
     Mutation: {
-        async chatRoom(root, { roomID, messages }) {
-            console.log(messages);
+        async chatRoom(root, { roomID, messages }, context) {
+            var accountID = getUserID(context);
+            const newResult = _.assign({}, messages, { "sender": accountID });
 
-            return RoomChats.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: messages } }).then(v => {
+            return RoomChats.findOneAndUpdate({ "roomID": roomID }, { $push: { messages: newResult } }).then(v => {
                 const now = new Date().toISOString();
                 const messges = {
                     "groupID": roomID,
                     "type": messages.type,
-                    "senderID": messages.userID,
+                    "senderID": accountID,
                     "message": messages.text,
                     "sendDate": now
                 }
@@ -66,6 +77,7 @@ module.exports = resolvers = {
         },
         deleteMessage: async (root, { currentUserID, friendID, messageID }, context) => {
             var accountID = getUserID(context);
+           
             return ChatPrivate.findOneAndUpdate(
                 {
                     $and: [{ "currentUser.id": accountID },

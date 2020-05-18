@@ -3,7 +3,10 @@ const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, del
     , inPendingList, isJoinRoom } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
-const Room = require('../../models/room');
+const { Room } = require('../../models/room');
+const RoomChats = require('../../models/chat_room');
+var _ = require('lodash');
+
 module.exports = resolvers = {
     Query: {
         getRoomInfo: async (_, { roomID }) => {

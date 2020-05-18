@@ -1,4 +1,6 @@
-const ListGame = require('apollo-server');
+const {ListGame} = require('../../models/list_game');
+const { getGameInfo } = require('../../service/gameService');
+const RoomBackground = require('../../models/room_background')
 module.exports = gameResolvers = {
 
     Query: {

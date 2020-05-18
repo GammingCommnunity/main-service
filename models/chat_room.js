@@ -9,7 +9,7 @@ const roomChats= mongoose.Schema({
     background:String,
     messages:[
         {
-            userID:String,
+            sender:String,
             text:{
                 content: String,
                 height: {
