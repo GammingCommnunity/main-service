@@ -25,7 +25,7 @@ module.exports = typeDef = gql`
             getPrivateMedia(chatID:String):[Media]
         }
         extend type Mutation{
-            chatPrivate(currentUserID:String,friendID:String!,input:MessageInput!):ResultCRUD
+            chatPrivate(friendID:String!,input:MessageInput!):ResultCRUD
             createPrivateChat(input:PrivateChatInput):ResultCRUD
             deleteMessage(currentUserID:String!,friendID:String!,messageID:String!):ResultCRUD
 

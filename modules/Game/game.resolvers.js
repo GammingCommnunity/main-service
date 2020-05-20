@@ -1,4 +1,4 @@
-const {ListGame} = require('../../models/list_game');
+const { ListGame } = require('../../models/list_game');
 const { getGameInfo } = require('../../service/gameService');
 const RoomBackground = require('../../models/room_background')
 module.exports = gameResolvers = {
@@ -86,7 +86,7 @@ module.exports = gameResolvers = {
         searchGame: async (_, { name, id }) => {
             let regex = new RegExp(name, 'i');
             if (name != "") {
-                return ListGame.findOne({ $text: { $search: name } }).then((v) => {
+                return ListGame.where('name').regex(new RegExp(`${name}`, 'i')).then( async (v) => {
                     console.log(v);
 
                     return v;

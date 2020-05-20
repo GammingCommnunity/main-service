@@ -47,4 +47,13 @@ module.exports = typeDef = gql`
         small
         large
     }
+    enum MessageTypeEnum{
+        text
+        media
+    }
+     
+    enum MessageStatusEnum{
+        SEND,
+        RECEIVED
+    }
 `;

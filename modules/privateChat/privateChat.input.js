@@ -3,4 +3,5 @@ module.exports = typeDef = gql`
     input PrivateChatInput {
         friendID:String!
     }
+     
 `

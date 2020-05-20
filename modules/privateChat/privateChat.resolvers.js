@@ -30,6 +30,11 @@ module.exports = resolvers = {
               
                 { $match: { '_id': new mongoose.Types.ObjectId(chatID) } },
                 { $unwind: "$messages" },
+                {
+                    $sort: {
+                        'messages._id': -1
+                    }
+                },
                 { $skip: page <= 1 ? 0 : (page * 10) },
                 { $limit: limit },
                 {
@@ -44,6 +49,8 @@ module.exports = resolvers = {
 
                     return v.docs[0].message
 
+                }).catch((_)=>{
+                    return []
                 })
             /* // cond 1: ID is the host
     

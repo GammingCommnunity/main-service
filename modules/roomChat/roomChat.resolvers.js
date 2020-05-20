@@ -18,17 +18,26 @@ module.exports = resolvers = {
                 {
                     $match: { "roomID": roomID}
                 },
+                
                 { $unwind: "$messages" },
-                { $skip: page <= 1 ? 0 : (page * 10) },
+                {
+                    $sort: {
+                        'messages._id': -1
+                    }
+                },
+                { $skip: page <= 1 ? 0 : (page * 10 - 10) },
                 { $limit: limit },
                 {
                     $group: {
                         _id: '$_id',
-                        message: { $push: '$messages' },
+                        message: { $push: '$messages'},
                     }
                 }
             ]).then((v) => {
                 return v[0].message
+                
+            }).catch((e) => {
+                return []
                 
             })
         },

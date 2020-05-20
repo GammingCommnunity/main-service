@@ -32,7 +32,7 @@ module.exports = typeDefs = gql`
         """
             *** Search game by name or by id (specify one of them)***
         """
-        searchGame(name:String,id:String):Game
+        searchGame(name:String,id:String):[Game]
         """
         *** Get all game 
             spectify limit to get exactly values u want    ***

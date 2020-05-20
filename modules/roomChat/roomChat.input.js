@@ -7,7 +7,7 @@ module.exports = typeDef = gql`
     }
     
     input MessageInput{
-        messageType: MessageType
+        messageType: MessageTypeEnum
         text: Custom!
     }
     input RoomChatInput{
