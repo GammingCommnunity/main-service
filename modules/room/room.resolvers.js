@@ -77,8 +77,13 @@ module.exports = resolvers = {
         },
         roomManager: async (_, { }, context) => {
             var accountID = getUserID(context);
+  
+            return Room.aggregate([
+           
+                {$match:{"member":accountID}}
+            ]);
 
-            return Room.aggregate([{ $match: { "hostID": accountID } }]);
+            
         },
     },
     Mutation: {

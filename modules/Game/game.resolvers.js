@@ -1,4 +1,5 @@
 const { ListGame } = require('../../models/list_game');
+const { Room } = require('../../models/room');
 const { getGameInfo } = require('../../service/gameService');
 const RoomBackground = require('../../models/room_background')
 module.exports = gameResolvers = {
