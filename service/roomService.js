@@ -67,16 +67,17 @@ module.exports = {
         if (result.ok == 1) return true;
         return false;
     },
-    confirmJoinRequest: async (hostID, requestID, roomID) => {
+    confirmJoinRequest: async (userID,requestID, roomID) => {
         var result = await ApproveList.deleteOne({
-            "hostID": hostID, "userID": requestID,
+            _id: requestID,
+            "userID": userID,
             "roomID": roomID
         });
         if (result.ok == 1) {
             // add user to this room
             await Room.findByIdAndUpdate(
                 roomID,
-                { $push: { "member": userID }, $pull: { "pendingRequest": userID } });
+                { $push: { "member": userID }, $pull: { "pendingRequest": requestID } });
             return true;
         }
         else return false;

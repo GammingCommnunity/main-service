@@ -1,7 +1,8 @@
 const ApproveList = require('../../models/approve_list');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
 const { onError, onSuccess } = require('../../src/error_handle');
-
+const { getUserID } = require('../../src/util');
+const {confirmJoinRequest,deleteJoinRequest}= require('../../service/roomService');
 module.exports = resolvers = {
     Query: {
         // show ra nhung phong host ma co thanh vien cho 
@@ -22,7 +23,7 @@ module.exports = resolvers = {
         },
     },
     Mutation: {
-        confirmUserRequest: async (_, { hostID, requestID, roomID }, context) => {
+        confirmUserRequest: async (_, { requestID, roomID }, context) => {
             var accountID = getUserID(context);
             var result = await confirmJoinRequest(accountID, requestID, roomID);
 

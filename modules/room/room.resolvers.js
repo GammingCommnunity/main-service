@@ -1,10 +1,15 @@
 var crypto = require("crypto");
-const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
+const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom,deleteJoinRequest, confirmJoinRequest
     , inPendingList, isJoinRoom } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
+const {checkRequestExist ,addApprove} = require('../../service/requestService');
 const { Room } = require('../../models/room');
 const RoomChats = require('../../models/chat_room');
+
+const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
+const pubsub = new PubSub();
+const JOIN_ROOM = 'JOIN_ROOM';
 var _ = require('lodash');
 
 module.exports = resolvers = {
