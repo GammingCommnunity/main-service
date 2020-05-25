@@ -213,6 +213,17 @@ module.exports = resolvers = {
             })
 
         },
-
+        leaveRoom: async (root, { roomID }, context) => {
+            var accountID = getUserID(context);
+            console.log(accountID);
+            
+            return Room.findOneAndUpdate({ _id: roomID }, { $pull: { "member": accountID } }).then((_) => {
+                return RoomChats.findOneAndUpdate({ roomID: roomID }, { $pull: { "member": accountID } }).then((_) => {
+                    return onSuccess("Leave success");
+                })
+            }).catch((err) => {
+                return onError('fail',"Leave fail")
+            })
+        }
     }
 }

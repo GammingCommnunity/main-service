@@ -66,7 +66,7 @@ module.exports = typeDef = gql`
         ***Add member to room (require token)***
         """
         addMember(roomID:String!,memberID:String!):ResultCRUD
-   
+        leaveRoom(roomID:String!):ResultCRUD
    }
 `
 // type RoomMessage{
