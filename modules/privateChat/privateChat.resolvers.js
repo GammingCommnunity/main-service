@@ -1,27 +1,33 @@
 const ChatPrivate = require('..//../models/chat_private/chat_private');
 const mongoose = require('mongoose');
+const _ = require('lodash');
 const RECIEVE_MESSAGE = 'RECIEVE_MESSAGE';
 const { onError, onSuccess } = require('../../src/error_handle');
-
-const { getUserID } = require('./..//../src/util');;
+const { getUserID } = require('./..//../src/util');
+const subService = require('../../service/subService')
 module.exports = resolvers = {
     Query: {
-        getAllPrivateChat: async (_, { }, context) => {
+        getAllPrivateChat: async (root, { }, context) => {
+            //subService.getAccountsInfo(context.token,)
             var accountID = getUserID(context);
+            
             return ChatPrivate.aggregate([
+                { $match: { 'member': { $eq: accountID } } },
                 { $unwind: "$member" },
-                { $match: { 'member': {$eq:accountID} } },
                 { $unwind: "$messages" },
                 {
                     $group: {
                         _id: "$_id",
-                        member: { $addToSet: "$member"},
+                        member: { $addToSet: "$member" },
                         latest_message: { $last: "$messages" }
-                    }
-                }
+                    },
+                },
+
             ])
-          //  { $unwind: "$messages" }
-        //    find({ 'member': accountID }).select('_id member')
+
+            //  { $unwind: "$messages" }
+            //    find({ 'member': accountID }).select('_id member')
+            //
         },
         getPrivateChatInfo: async (_, { roomID }) => {
             var member = [];

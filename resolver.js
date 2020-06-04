@@ -1,5 +1,4 @@
 require('dotenv').config();
-var cloudinary = require('cloudinary').v2;
 const mongoose = require('mongoose');
 const { Room } = require('./models/room')
 const RoomChats = require('./models/chat_room');

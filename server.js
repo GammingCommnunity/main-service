@@ -1,4 +1,4 @@
-const { ApolloServer,AuthenticationError } = require('apollo-server-express');
+const { ApolloServer, AuthenticationError } = require('apollo-server-express');
 const { MemcachedCache } = require('apollo-server-cache-memcached')
 const Schema = require('./schema');
 const { createServer } = require('http');
@@ -6,7 +6,7 @@ const express = require('express');
 const checkSession = require('./middleware/checkSession');
 const cors = require('cors');
 const env = require('./env');
-const serverService = require('./service/severService');
+const serverService = require('./service/serverService');
 /*const { SubscriptionServer } = require('subscriptions-transport-ws');
 const buildDataloaders = require('./src/dataloader');
 const { Room, getRoomLoader } = require('./models/room');
@@ -27,23 +27,33 @@ const server = new ApolloServer({
 
     context: async ({ req, res }) => {
         const token = req.headers.token || null;
-        const errorInfo = {
-            "message": "Wrong token!",
-            "status":"400"
+        const authCode = req.headers.auth_code;
+        if (token == null && authCode == env.main_server_code) {
+            return {
+                token: ""
+            }
         }
-        var info = JSON.parse(res.info);
+        else {
+            const errorInfo = {
+                "message": "Wrong token!",
+                "status": "400"
+            }
+            var info = JSON.parse(res.info);
 
-        if (info.status != "SUCCESSFUL") {
-            return res.json(errorInfo)
+            if (info.status != "SUCCESSFUL") {
+                return res.json(errorInfo)
+            }
+            return {
+                authInfo: info.data,
+                token: token
+                /* dataloaders: {
+                     roomLoader: getRoomLoader(),
+                     listGameLoader: getListGameLoader()
+                 }*/
+            };
         }
 
-        return {
-            authInfo:info.data,
-           /* dataloaders: {
-                roomLoader: getRoomLoader(),
-                listGameLoader: getListGameLoader()
-            }*/
-        };
+
 
 
     }

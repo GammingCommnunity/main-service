@@ -2,14 +2,14 @@ require('dotenv').config();
 const fetch = require('node-fetch');
 const env = require('../env');
 module.exports = async (req, res, next) => {
+    const authUrl = "https://auth-service.glitch.me/auth";
     var authCode = req.headers.auth_code;
     // res.header("Access-Control-Allow-Origin", "YOUR-DOMAIN.TLD"); // update to match the domain you will make the request from
-    //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
    // header.Add("Access-Control-Allow-Origin", "*")
   //  header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    const authUrl = "https://auth-service.glitch.me/auth";
-    //console.log(req.headers.token, process.env.secret_key_jwt);
+    
     if (authCode == env.main_server_code) {
         next()
     }
