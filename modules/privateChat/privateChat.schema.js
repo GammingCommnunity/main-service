@@ -4,9 +4,7 @@ module.exports = typeDef = gql`
         type PrivateChat{
             _id:ID
             member:[String]
-            messages:[
-                PrivateMessagesType
-            ]
+            latest_message:PrivateMessagesType
         }
 
         extend type Query{

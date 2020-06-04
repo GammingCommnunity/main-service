@@ -3,12 +3,25 @@ const mongoose = require('mongoose');
 const RECIEVE_MESSAGE = 'RECIEVE_MESSAGE';
 const { onError, onSuccess } = require('../../src/error_handle');
 
-const {getUserID } = require('./..//../src/util');;
+const { getUserID } = require('./..//../src/util');;
 module.exports = resolvers = {
     Query: {
         getAllPrivateChat: async (_, { }, context) => {
             var accountID = getUserID(context);
-            return ChatPrivate.find({ 'member': accountID }).select('_id member')
+            return ChatPrivate.aggregate([
+                { $unwind: "$member" },
+                { $match: { 'member': {$eq:accountID} } },
+                { $unwind: "$messages" },
+                {
+                    $group: {
+                        _id: "$_id",
+                        member: { $addToSet: "$member"},
+                        latest_message: { $last: "$messages" }
+                    }
+                }
+            ])
+          //  { $unwind: "$messages" }
+        //    find({ 'member': accountID }).select('_id member')
         },
         getPrivateChatInfo: async (_, { roomID }) => {
             var member = [];
@@ -27,7 +40,7 @@ module.exports = resolvers = {
         getPrivateChatMessage: async (root, { chatID, limit, page = 1 }, context) => {
             var accountID = getUserID(context);
             var myAggresgate = ChatPrivate.aggregate([
-              
+
                 { $match: { '_id': new mongoose.Types.ObjectId(chatID) } },
                 { $unwind: "$messages" },
                 {
@@ -49,7 +62,7 @@ module.exports = resolvers = {
 
                     return v.docs[0].message
 
-                }).catch((_)=>{
+                }).catch((_) => {
                     return []
                 })
             /* // cond 1: ID is the host
@@ -70,7 +83,7 @@ module.exports = resolvers = {
              });*/
 
         },
-        
+
     },
 
     Mutation: {
