@@ -40,7 +40,10 @@ module.exports = typeDef = gql`
     }
     enum MessageType{
         text
-        media
+        image
+        video
+        gif
+        url
     }
     enum GroupSize{
         none
@@ -49,7 +52,10 @@ module.exports = typeDef = gql`
     }
     enum MessageTypeEnum{
         text
-        media
+        image
+        video
+        gif
+        url
     }
      
     enum MessageStatusEnum{
