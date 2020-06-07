@@ -44,6 +44,7 @@ module.exports = typeDef = gql`
         video
         gif
         url
+        file
     }
     enum GroupSize{
         none
@@ -56,6 +57,7 @@ module.exports = typeDef = gql`
         video
         gif
         url
+        file
     }
      
     enum MessageStatusEnum{
