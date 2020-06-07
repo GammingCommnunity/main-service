@@ -63,5 +63,6 @@ module.exports = typeDef = gql`
     enum MessageStatusEnum{
         SEND,
         RECEIVED
+        DELETED
     }
 `;
