@@ -10,10 +10,11 @@ const messageSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        default:"SEND"
+        default: "SEND"
     },
     text: {
         content: String,
+        publicID: String,
         height: {
             default: 0,
             type: Number
@@ -32,7 +33,7 @@ const messageSchema = mongoose.Schema({
 
 const ChatPrivate = mongoose.Schema({
 
-    member:[String],
+    member: [String],
     messages: [
         messageSchema
     ]
