@@ -2,6 +2,7 @@ const { gql } = require('apollo-server');
 module.exports = typeDef = gql`
     type TextType{
         content: String
+        publicID:String
         height: Float
         width: Float
     }

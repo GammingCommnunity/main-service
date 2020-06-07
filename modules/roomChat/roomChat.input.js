@@ -1,13 +1,14 @@
 const { gql } = require('apollo-server');
 module.exports = typeDef = gql`
     input Custom{
-        content:String
+        content:String!
+        publicID:String!
         height:Float
         width:Float
     }
     
     input MessageInput{
-        messageType: MessageTypeEnum
+        messageType: MessageTypeEnum!
         text: Custom!
     }
     input RoomChatInput{
