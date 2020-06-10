@@ -14,6 +14,7 @@ module.exports = typeDef = gql`
     }
     type FileInfoType{
         fileName:String
+        fileSize:String
         publicID:String
         height: Float
         width: Float
