@@ -14,15 +14,21 @@ const messageSchema = mongoose.Schema({
     },
     text: {
         content: String,
-        publicID: String,
-        height: {
-            default: 0,
-            type: Number
-        },
-        width: {
-            default: 0,
-            type: Number
+        fileInfo: {
+            fileName: String,
+            fileSize:String,
+            publicID: String,
+            height: {
+                default: 0,
+                type: Number
+            },
+            width: {
+                default: 0,
+                type: Number
+            }
+
         }
+        
     },
     createAt: {
         type: Date,
@@ -32,7 +38,7 @@ const messageSchema = mongoose.Schema({
 })
 
 const ChatPrivate = mongoose.Schema({
-
+    host:String,
     member: [String],
     messages: [
         messageSchema

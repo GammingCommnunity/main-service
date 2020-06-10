@@ -25,6 +25,7 @@ module.exports = typeDef = gql`
         extend type Mutation{
             chatPrivate(friendID:String!,input:MessageInput!):ResultCRUD
             createPrivateChat(input:PrivateChatInput):ResultCRUD
+            deletePrivateChat(chatID:String!):ResultCRUD
             deleteMessage(currentUserID:String!,friendID:String!,messageID:String!):ResultCRUD
 
         }

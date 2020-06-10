@@ -98,7 +98,7 @@ module.exports = resolvers = {
             var currentID = getUserID(context);
             var member = [currentID, input.friendID];
 
-            var newInput = _.assign({}, input, { "member": member });
+            var newInput = _.assign({}, input, { "host":currentID,"member": member });
 
             return ChatPrivate.create(newInput).then((v) => {
                 return onSuccess("Create success!")
@@ -106,7 +106,11 @@ module.exports = resolvers = {
                 return onError('fail', "Create fail...")
             });
         },
-        async chatPrivate(root, { currentUserID, friendID, input }, context) {
+        deletePrivateChat: async (root, { chatID }, context)=>{
+            var currentID = getUserID(context);
+
+        },
+        chatPrivate: async(root, { friendID, input }, context)=> {
             //condition 1: sender is current User
             var accountID = getUserID(context);
 

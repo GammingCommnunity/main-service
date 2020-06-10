@@ -1,11 +1,6 @@
 const { gql } = require('apollo-server');
 module.exports = typeDef = gql`
-    type TextType{
-        content: String
-        publicID:String
-        height: Float
-        width: Float
-    }
+    
     type PrivateMessagesType{
         id: String
         messageType: MessageTypeEnum
@@ -13,4 +8,15 @@ module.exports = typeDef = gql`
         text: TextType
         createAt: Date
     }
+    type TextType{
+        content: String
+        fileInfo:FileInfoType
+    }
+    type FileInfoType{
+        fileName:String
+        publicID:String
+        height: Float
+        width: Float
+    }
+   
 `
