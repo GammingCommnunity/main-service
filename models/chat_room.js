@@ -10,19 +10,30 @@ const roomChats = mongoose.Schema({
     messages: [
         {
             sender: String,
+            messageType: String,
+            reactions: [
+                {
+                    userID: String,
+                    reactionType: String,
+                } 
+            ],
             text: {
                 content: String,
-                publicID: String,
-                height: {
-                    default: 0,
-                    type: Number
-                },
-                width: {
-                    default: 0,
-                    type: Number
+                fileInfo: {
+                    fileName: String,
+                    fileSize:String,
+                    publicID: String,
+                    height: {
+                        default: 0,
+                        type: Number
+                    },
+                    width: {
+                        default: 0,
+                        type: Number
+                    }
                 }
+                
             },
-            messageType: String,
             createAt: {
                 type: Date,
                 default: Date.now

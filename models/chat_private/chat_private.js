@@ -12,6 +12,12 @@ const messageSchema = mongoose.Schema({
         type: String,
         default: "SEND"
     },
+    reactions: [
+        {
+            userID:String,
+            reactionType: String,
+        }
+    ],
     text: {
         content: String,
         fileInfo: {
@@ -38,7 +44,8 @@ const messageSchema = mongoose.Schema({
 })
 
 const ChatPrivate = mongoose.Schema({
-    host:String,
+    host: String,
+    
     member: [String],
     messages: [
         messageSchema

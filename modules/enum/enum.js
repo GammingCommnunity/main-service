@@ -59,7 +59,11 @@ module.exports = typeDef = gql`
         url
         file
     }
-     
+    enum Reaction{
+        like
+        heart
+        laught
+    }
     enum MessageStatusEnum{
         SEND,
         RECEIVED

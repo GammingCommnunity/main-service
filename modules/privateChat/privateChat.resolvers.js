@@ -108,7 +108,13 @@ module.exports = resolvers = {
         },
         deletePrivateChat: async (root, { chatID }, context)=>{
             var currentID = getUserID(context);
+            // delete private chat if you are host
 
+            // remove from member if you are not host
+        },
+        reactionMessage: async (root, {chatID, messageID, type }, context) => {
+            var accountID = getUserID(context);
+            
         },
         chatPrivate: async(root, { friendID, input }, context)=> {
             //condition 1: sender is current User
