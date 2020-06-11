@@ -39,6 +39,7 @@ module.exports = typeDef = gql`
         roomManager:[Room]
    }
    type Mutation{
+        changeGroupPhoto(groupID:String!,type:GroupImage,url:String!):ResultCRUD
         RmvMbFrRoom(type:String!,memberID:String,roomID:String):ResultCRUD
         """
             ***Create  a room with 'input'***
@@ -53,17 +54,17 @@ module.exports = typeDef = gql`
             userID is must to auth ***
 
         """
-        removeRoom(roomID:ID!,userID:String!):ResultCRUD
+        removeRoom(roomID:ID!):ResultCRUD
         chatRoom(roomID:String!,messages:MessageInput):ResultCRUD
         joinRoom(roomID:String!):ResultCRUD
         
         """ 
-        ***Edit room info***
+        ***Thay đổi thông tin phòng***
         """
         editRoom(roomID:ID!,hostID:String!,newData:RoomInput):ResultCRUD
         
         """ 
-        ***Add member to room (require token)***
+        ***Thêm người vào phòng***
         """
         addMember(roomID:String!,memberID:String!):ResultCRUD
         leaveRoom(roomID:String!):ResultCRUD

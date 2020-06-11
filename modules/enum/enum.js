@@ -51,6 +51,10 @@ module.exports = typeDef = gql`
         small
         large
     }
+    enum GroupImage{
+        cover
+        profile
+    }
     enum MessageTypeEnum{
         text
         image

@@ -1,9 +1,9 @@
 var crypto = require("crypto");
-const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom,deleteJoinRequest, confirmJoinRequest
+const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
     , inPendingList, isJoinRoom } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
-const {checkRequestExist ,addApprove} = require('../../service/requestService');
+const { checkRequestExist, addApprove } = require('../../service/requestService');
 const { Room } = require('../../models/room');
 const RoomChats = require('../../models/chat_room');
 
@@ -77,13 +77,13 @@ module.exports = resolvers = {
         },
         roomManager: async (_, { }, context) => {
             var accountID = getUserID(context);
-  
+
             return Room.aggregate([
-           
-                {$match:{"member":accountID}}
+
+                { $match: { "member": accountID } }
             ]);
 
-            
+
         },
     },
     Mutation: {
@@ -107,7 +107,7 @@ module.exports = resolvers = {
                 })
             })
         },
-        removeRoom: async (root, { roomID, userID }, context) => {
+        removeRoom: async (root, { roomID }, context) => {
             var accountID = getUserID(context);
 
             try {
@@ -198,6 +198,14 @@ module.exports = resolvers = {
 
         },
 
+        changeGroupPhoto: async (root, { groupID, type, url }) => {
+            return Room.findByIdAndUpdate(groupID,
+                type == "logo" ? { $set: { roomLogo: url } } : { $set: { roomBackground: url } }
+            ).then((v) => {
+                return onSuccess("Change success!")
+            }).catch((err) => onError("fail", "Change failded!"))
+
+        },
 
         // id_user: id from host message, id_friends
         async addMember(root, { roomID, memberID }) {
@@ -216,13 +224,13 @@ module.exports = resolvers = {
         leaveRoom: async (root, { roomID }, context) => {
             var accountID = getUserID(context);
             console.log(accountID);
-            
+
             return Room.findOneAndUpdate({ _id: roomID }, { $pull: { "member": accountID } }).then((_) => {
                 return RoomChats.findOneAndUpdate({ roomID: roomID }, { $pull: { "member": accountID } }).then((_) => {
                     return onSuccess("Leave success");
                 })
             }).catch((err) => {
-                return onError('fail',"Leave fail")
+                return onError('fail', "Leave fail")
             })
         }
     }
