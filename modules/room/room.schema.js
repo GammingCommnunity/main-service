@@ -61,7 +61,7 @@ module.exports = typeDef = gql`
         """ 
         ***Thay đổi thông tin phòng***
         """
-        editRoom(roomID:ID!,hostID:String!,newData:RoomInput):ResultCRUD
+        editRoom(roomID:ID!,newData:RoomInput):ResultCRUD
         
         """ 
         ***Thêm người vào phòng***

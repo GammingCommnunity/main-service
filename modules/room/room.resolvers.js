@@ -87,7 +87,7 @@ module.exports = resolvers = {
         },
     },
     Mutation: {
-        createRoom: async (_, { roomInput, roomChatInput, userID }, context) => {
+        createRoom: async (_, { roomInput, roomChatInput }, context) => {
             var accountID = getUserID(context);
             return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                 if (v.length > 0) {
@@ -123,7 +123,7 @@ module.exports = resolvers = {
                 return onError('unAuth', new AuthenticationError("Wrong token"))
             }
         },
-        editRoom: async (_, { hostID, roomID, newData }, context) => {
+        editRoom: async (_, { roomID, newData }, context) => {
             try {
                 var accountID = getUserID(context);
 
@@ -133,8 +133,6 @@ module.exports = resolvers = {
                     "description": newData.description,
                     "member": newData.member,
                     "maxOfMember": newData.maxOfMember,
-                    "roomBackground": newData.roomBackground,
-                    "roomLogo": newData.roomLogo
                 }
                 var result = await editRoom(accountID, roomID, data);
                 return result ? onSuccess("Update success!") : onError('fail', "Somethings wrong during update...");
@@ -148,7 +146,7 @@ module.exports = resolvers = {
         * @param {roomID} "room user join" 
         * @param {Info} "info need for approve list"
         */
-        async joinRoom(root, { roomID, currentID, info }, context) {
+        async joinRoom(root, { roomID }, context) {
             //check userID is not host
             var accountID = getUserID(context);
 
