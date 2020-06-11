@@ -198,7 +198,7 @@ module.exports = resolvers = {
 
         changeGroupPhoto: async (root, { groupID, type, url }) => {
             return Room.findByIdAndUpdate(groupID,
-                type == "logo" ? { $set: { roomLogo: url } } : { $set: { roomBackground: url } }
+                type == "profile" ? { $set: { roomLogo: url } } : { $set: { roomBackground: url } }
             ).then((v) => {
                 return onSuccess("Change success!")
             }).catch((err) => onError("fail", "Change failded!"))

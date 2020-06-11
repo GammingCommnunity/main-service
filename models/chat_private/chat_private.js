@@ -21,9 +21,18 @@ const messageSchema = mongoose.Schema({
     text: {
         content: String,
         fileInfo: {
-            fileName: String,
-            fileSize:String,
-            publicID: String,
+            fileName: {
+                default: "",
+                type: String
+            },
+            fileSize: {
+                default: "",
+                type: String
+            },
+            publicID: {
+                default: "",
+                type: String
+            },
             height: {
                 default: 0,
                 type: Number
