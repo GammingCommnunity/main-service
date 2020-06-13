@@ -1,9 +1,9 @@
+const {fetch } = require('cross-fetch');
 const { Room } = require('../models/room');
 const RoomChats = require('../models/chat_room');
 const ApproveList = require('../models/approve_list');
-
 const { onError, onSuccess } = require('../src/error_handle');
-
+const env = require('../env');
 const _ = require('lodash');
 module.exports = {
     checkHost: async (roomID, userID) => {
@@ -15,6 +15,24 @@ module.exports = {
         else {
             return false;
         }
+    },
+    initGroupPost: async (groupID,token) => {
+        var query = `
+            mutation{
+                initGroupPost(groupID:"${groupID}"){
+                    status
+                    payload
+                }
+            }
+        `;
+        return fetch(env.postService, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", token: token },
+            body: JSON.stringify({ query: query}),
+        }).then((v) => v.json()).then((v) => {
+            if (v.data.status == 200) return true;
+            return false;
+        });
     },
     getHostID: async (roomID) => {
         var result = await Room.findOne({ "_id": roomID }).select('hostID');

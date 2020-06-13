@@ -73,4 +73,8 @@ module.exports = typeDef = gql`
         RECEIVED
         DELETED
     }
+    enum SearchRoomOptionEnum{
+        byName
+        byID
+    }
 `;

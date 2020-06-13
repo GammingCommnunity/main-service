@@ -11,7 +11,6 @@ const { PrivateChatModule, PrivateChatResolvers } = require('./modules/privateCh
 const { RoomChatModules, RoomChatResolvers } = require('./modules/roomChat/roomChat.module');
 const { RoomModule, RoomResolvers } = require('./modules/room/room.module')
 const { RequestModule, RequestResolvers } = require('./modules/request/request.module');
-const {RoomPostModules,RoomPostResolvers} =require('./modules/roomPost/roomPost.module');
 const schema = makeExecutableSchema({
 
     typeDefs: [
@@ -25,7 +24,7 @@ const schema = makeExecutableSchema({
         RoomChatModules,
         RoomModule,
         RequestModule,
-        RoomPostModules
+        
     ],
 
     resolvers:
@@ -38,7 +37,7 @@ const schema = makeExecutableSchema({
             RoomChatResolvers,
             RoomResolvers,
             RequestResolvers,
-            RoomPostResolvers
+            
         ],
 
 });

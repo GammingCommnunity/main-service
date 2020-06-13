@@ -29,13 +29,13 @@ module.exports = typeDef = gql`
         """
         getAllRoom(page:Int!,limit:Int!):[Room]
         getRoomInfo(roomID:String):Room
-        findRoomByName(room_name:String!):[Room]
+        searchRoom(query:String!,option:SearchRoomOptionEnum!):[Room]
         getRoomCreateByUser:[Room]
         changeHost(oldHost:String!,newHost:String!):[Room]
         getRoomByGame(limit:Int!,page:Int!,gameID:String!,groupSize:GroupSize):[Room]
         getRoomJoin(userID:String):[Room]
         getRoomMedia(roomID:String):[Media]
-        inviteToRoom(hostID:String,roomID:String):ResultCRUD
+        inviteToRoom(roomID:String!):ResultCRUD
         roomManager:[Room]
    }
    type Mutation{
