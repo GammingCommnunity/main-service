@@ -13,6 +13,7 @@ module.exports = typeDef = gql`
         code:String!
         roomLogo:String
         roomBackground:String
+        countMember:Int
         isJoin:Boolean
         isRequest:Boolean
     }

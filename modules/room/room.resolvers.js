@@ -1,6 +1,5 @@
-var crypto = require("crypto");
 const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
-    , inPendingList, isJoinRoom,initGroupPost } = require('../../service/roomService');
+    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
@@ -15,7 +14,21 @@ var _ = require('lodash');
 module.exports = resolvers = {
     Query: {
         searchRoom: async (root, { query, option }, ctx) => {
-            return option == "byID" ? Room.find({ _id: query }) : Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
+            if (option == "byCode") {
+                Room.find({ code: query })
+            }
+            else {
+                return await Room.aggregate([
+                    { $match: { "roomName": new RegExp(`${query}`, 'i') } },
+                    //{$unwind:"$member"},
+                    { $project: { countMember: { $size: "$member" } } }
+                ])
+                
+                
+                //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
+            }
+           
+         
         },
         getRoomInfo: async (_, { roomID }) => {
             return await getRoomInfo(roomID);
@@ -24,15 +37,15 @@ module.exports = resolvers = {
             var accountID = getUserID(context);
             return Room.find({ "member": { "$in": [accountID] } });
         },
-        inviteToRoom: async (_, {roomID }, context) => {
+        inviteToRoom: async (_, { roomID }, context) => {
             // double of randombytes
-            let r = crypto.randomBytes(3).toString('hex');
+            var code = generateInviteCode();
             var accountID = getUserID(context);
 
             if (checkHost(roomID, accountID)) {
                 // true, add code to that room
-                return Room.updateOne({ "_id": roomID }, { "code": r }).then((v) => {
-                    return onSuccess("Successful generate code !", r)
+                return Room.updateOne({ "_id": roomID }, { "code": code }).then((v) => {
+                    return onSuccess("Successful generate code !", code)
                 }).catch((err) => {
                     return onError('fail', "Generate fail. Try again")
                 })
@@ -58,16 +71,17 @@ module.exports = resolvers = {
                 var member = _.get(value, "member");
                 var pending = _.get(value, "pendingRequest");
                 var maxOfMember = _.get(value, "maxOfMember");
+                
                 // check if user is member
 
                 if (_.includes(member, accountID) && _.get(value, "hostID") != accountID) {
-                    _.assign(value, { "isJoin": true, "isRequest": false })
+                    _.assign(value, { "isJoin": true, "isRequest": false,countMember:member.length })
                 }
                 if (_.includes(pending, accountID)) {
-                    _.assign(value, { "isJoin": false, "isRequest": true })
+                    _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
                 }
                 else {
-                    _.assign(value, { "isJoin": false, "isRequest": false })
+                    _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length})
                 }
 
                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
@@ -86,24 +100,25 @@ module.exports = resolvers = {
                 { $match: { "member": accountID } }
             ]);
 
-
         },
+
     },
     Mutation: {
-        createRoom: async (_, { roomInput, roomChatInput }, context) => {
+        createRoom: async (root, { roomInput, roomChatInput }, context) => {
             var accountID = getUserID(context);
-            console.log(context);
-            
-           /* return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
+            var code = generateInviteCode();
+            var roomInfo = _.assign({}, roomInput, { hostID: accountID, code: code })
+            return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                 if (v.length > 0) {
                     return onError('fail', "This name already taken")
                 }
-                else return Room.create(roomInput).then(async (value) => {
+                else return Room.create(roomInfo).then(async (value) => {
                     return RoomChats.create(roomChatInput).then(async (v) => {
-                        return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then((v) => {
+                        return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then( async (v) => {
                             // init post model
-                            initGroupPost(value._id,context)
-                            return onSuccess("Create success!", value._id)
+                            await initGroupPost(value._id, context.token);
+                            return onSuccess("Create success!", code);
+
                         })
 
                     })
@@ -112,7 +127,7 @@ module.exports = resolvers = {
 
                     return onError("Create failed!")
                 })
-            })*/
+            })
         },
         removeRoom: async (root, { roomID }, context) => {
             var accountID = getUserID(context);

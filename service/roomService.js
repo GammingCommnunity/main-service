@@ -1,11 +1,14 @@
-const {fetch } = require('cross-fetch');
+const { fetch } = require('cross-fetch');
 const { Room } = require('../models/room');
 const RoomChats = require('../models/chat_room');
 const ApproveList = require('../models/approve_list');
 const { onError, onSuccess } = require('../src/error_handle');
 const env = require('../env');
 const _ = require('lodash');
+var crypto = require("crypto");
+
 module.exports = {
+    generateInviteCode: () => crypto.randomBytes(3).toString('hex'),
     checkHost: async (roomID, userID) => {
         const result = await Room.find({ "_id": roomID, "hostID": userID }).countDocuments();
 
@@ -16,7 +19,7 @@ module.exports = {
             return false;
         }
     },
-    initGroupPost: async (groupID,token) => {
+    initGroupPost: async (groupID, token) => {
         var query = `
             mutation{
                 initGroupPost(groupID:"${groupID}"){
@@ -28,8 +31,10 @@ module.exports = {
         return fetch(env.postService, {
             method: "POST",
             headers: { "Content-Type": "application/json", token: token },
-            body: JSON.stringify({ query: query}),
+            body: JSON.stringify({ query: query }),
         }).then((v) => v.json()).then((v) => {
+            console.log(v);
+            
             if (v.data.status == 200) return true;
             return false;
         });
@@ -134,7 +139,7 @@ module.exports = {
             _id: requestID,
         }).select('userID');
         console.log(result);
-        
+
         var deleteResult = await ApproveList.deleteOne({ _id: requestID });
 
         if (deleteResult.ok == 1) {
@@ -145,7 +150,7 @@ module.exports = {
             await Room.findByIdAndUpdate(
                 roomID,
                 { $push: { "member": result.userID }, $pull: { "pendingRequest": result.userID } });
-            await RoomChats.findOneAndUpdate({ roomID: roomID }, { $push: { "member": result.userID}})
+            await RoomChats.findOneAndUpdate({ roomID: roomID }, { $push: { "member": result.userID } })
             return true;
         }
         else return false;
