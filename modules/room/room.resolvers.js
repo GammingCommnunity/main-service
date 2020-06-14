@@ -19,9 +19,8 @@ module.exports = resolvers = {
                     { $match: { "code": query } },
                     //{$unwind:"$member"},
                     {
-                        $project: {
+                        $addFields: {
                             countMember: { $size: "$member" },
-                            code: "$code"
                         }
                     }
                 ])
@@ -30,10 +29,10 @@ module.exports = resolvers = {
                 return await Room.aggregate([
                     { $match: { "roomName": new RegExp(`${query}`, 'i') } },
                     //{$unwind:"$member"},
+                    
                     {
-                        $project: {
+                        $addFields: {
                             countMember: { $size: "$member" },
-                            code: "$code"
                         }
                     }
                 ])
