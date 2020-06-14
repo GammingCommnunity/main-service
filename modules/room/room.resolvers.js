@@ -15,20 +15,34 @@ module.exports = resolvers = {
     Query: {
         searchRoom: async (root, { query, option }, ctx) => {
             if (option == "byCode") {
-                Room.find({ code: query })
+                return await Room.aggregate([
+                    { $match: { "code": query } },
+                    //{$unwind:"$member"},
+                    {
+                        $project: {
+                            countMember: { $size: "$member" },
+                            code: "$code"
+                        }
+                    }
+                ])
             }
             else {
                 return await Room.aggregate([
                     { $match: { "roomName": new RegExp(`${query}`, 'i') } },
                     //{$unwind:"$member"},
-                    { $project: { countMember: { $size: "$member" } } }
+                    {
+                        $project: {
+                            countMember: { $size: "$member" },
+                            code: "$code"
+                        }
+                    }
                 ])
-                
-                
+
+
                 //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
             }
-           
-         
+
+
         },
         getRoomInfo: async (_, { roomID }) => {
             return await getRoomInfo(roomID);
@@ -71,17 +85,17 @@ module.exports = resolvers = {
                 var member = _.get(value, "member");
                 var pending = _.get(value, "pendingRequest");
                 var maxOfMember = _.get(value, "maxOfMember");
-                
+
                 // check if user is member
 
                 if (_.includes(member, accountID) && _.get(value, "hostID") != accountID) {
-                    _.assign(value, { "isJoin": true, "isRequest": false,countMember:member.length })
+                    _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
                 }
                 if (_.includes(pending, accountID)) {
                     _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
                 }
                 else {
-                    _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length})
+                    _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
                 }
 
                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
@@ -114,7 +128,7 @@ module.exports = resolvers = {
                 }
                 else return Room.create(roomInfo).then(async (value) => {
                     return RoomChats.create(roomChatInput).then(async (v) => {
-                        return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then( async (v) => {
+                        return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then(async (v) => {
                             // init post model
                             await initGroupPost(value._id, context.token);
                             return onSuccess("Create success!", code);
