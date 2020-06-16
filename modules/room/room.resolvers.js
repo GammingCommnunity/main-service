@@ -5,7 +5,7 @@ const { onError, onSuccess } = require('../../src/error_handle');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
 const { Room } = require('../../models/room');
 const RoomChats = require('../../models/chat_room');
-
+const gameService = require('../../service/gameService');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const pubsub = new PubSub();
 const JOIN_ROOM = 'JOIN_ROOM';
@@ -122,15 +122,20 @@ module.exports = resolvers = {
 
     },
     Mutation: {
-        createRoom: async (root, { roomInput}, context) => {
+        createRoom: async (root, { roomInput, needApproved}, context) => {
             var accountID = getUserID(context);
             var code = generateInviteCode();
+            var member = roomInput.member;
+            var gameName = await gameService.getGameNameById(roomInput.game.gameID);
             var roomChatInput = {
                 roomID: "",
-                member: [accountID],
+                member: member.push(accountID),
                 messages: []
             }
-            var roomInfo = _.assign({}, roomInput, { hostID: accountID, code: code })
+            
+            
+            var gameInfo = _.assign({},roomInput.game,{gameName:gameName})
+            var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: [accountID],gameInfo,code: code })
             return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                 if (v.length > 0) {
                     return onError('fail', "This name already taken")
@@ -139,7 +144,7 @@ module.exports = resolvers = {
                     return RoomChats.create(roomChatInput).then(async (v) => {
                         return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then(async (v) => {
                             // init post model
-                            await initGroupPost(value._id, context.token);
+                            await initGroupPost(value._id, needApproved,context.token);
                             return onSuccess("Create success!", code);
 
                         })

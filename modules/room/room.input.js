@@ -3,15 +3,14 @@ module.exports = typeDef = gql`
 
   input GameInfo{
       gameID:String!
-      gameName:String!
+      gameName:String
       platform:Platforms
   }
   input RoomInput{
       roomName:String!
       isPrivate:Boolean!
-      hostID:String
       description:String
-      member:[String]!
+      member:[String]
       maxOfMember:Int!
       game:GameInfo
       code:String

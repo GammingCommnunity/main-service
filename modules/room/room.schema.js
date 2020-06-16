@@ -46,8 +46,7 @@ module.exports = typeDef = gql`
             ***Create  a room with 'input'***
         """
         createRoom(
-            roomInput: RoomInput,
-            roomChatInput:RoomChatInput):ResultCRUD
+            roomInput: RoomInput,needApproved:Boolean!):ResultCRUD
          
         """
             ***Remove  a room,

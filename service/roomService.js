@@ -19,10 +19,10 @@ module.exports = {
             return false;
         }
     },
-    initGroupPost: async (groupID, token) => {
+    initGroupPost: async (groupID,needApproved, token) => {
         var query = `
             mutation{
-                initGroupPost(groupID:"${groupID}"){
+                initGroupPost(groupID:"${groupID}",approveFirst:${needApproved}){
                     status
                     payload
                 }
