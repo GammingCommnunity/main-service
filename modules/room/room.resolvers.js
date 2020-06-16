@@ -127,12 +127,18 @@ module.exports = resolvers = {
             var code = generateInviteCode();
             var member = roomInput.member;
             var gameName = await gameService.getGameNameById(roomInput.game.gameID);
+           
             var roomChatInput = {
                 roomID: "",
                 member: member.push(accountID),
                 messages: []
             }
-            
+            console.log(gameName);
+            if (!gameName) {
+                return onError('fail', "Game ID not exist! ") 
+            }
+
+
             
             var gameInfo = _.assign({},roomInput.game,{gameName:gameName})
             var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: [accountID],gameInfo,code: code })

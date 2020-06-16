@@ -6,8 +6,10 @@ module.exports = {
         });
     },
     getGameNameById: async (id) => {
-        return await ListGame.findById(id).select('name').catch((err) => {
-            return null;
+        return await ListGame.findById(id).select('name').then((v) => {
+            return v.name;
+        }).catch((err) => {
+            return false;
         });;
     }
     
