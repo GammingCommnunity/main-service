@@ -138,10 +138,9 @@ module.exports = resolvers = {
                 return onError('fail', "Game ID not exist! ") 
             }
 
+            var gameInfo = _.assign(roomInput.game, { gameName: gameName })        
+            var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: member, code: code });
 
-            
-            var gameInfo = _.assign({},roomInput.game,{gameName:gameName})
-            var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: [accountID],gameInfo,code: code })
             return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                 if (v.length > 0) {
                     return onError('fail', "This name already taken")
