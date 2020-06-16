@@ -86,16 +86,21 @@ module.exports = resolvers = {
                 var maxOfMember = _.get(value, "maxOfMember");
 
                 // check if user is member
-
-                if (_.includes(member, accountID) && _.get(value, "hostID") != accountID) {
-                    _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
-                }
-                if (_.includes(pending, accountID)) {
-                    _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
-                }
-                else {
+                if (_.get(value, "hostID") == accountID) {
                     _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
+                    return;
+                } else {
+                    if (_.includes(member, accountID) && _.get(value, "hostID") != accountID) {
+                        _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
+                    }
+                    if (_.includes(pending, accountID)) {
+                        _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
+                    }
+                    else {
+                        _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
+                    }
                 }
+               
 
                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
             })
@@ -117,9 +122,14 @@ module.exports = resolvers = {
 
     },
     Mutation: {
-        createRoom: async (root, { roomInput, roomChatInput }, context) => {
+        createRoom: async (root, { roomInput}, context) => {
             var accountID = getUserID(context);
             var code = generateInviteCode();
+            var roomChatInput = {
+                roomID: "",
+                member: [accountID],
+                messages: []
+            }
             var roomInfo = _.assign({}, roomInput, { hostID: accountID, code: code })
             return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                 if (v.length > 0) {
@@ -222,7 +232,7 @@ module.exports = resolvers = {
                         }
                         pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
 
-                        return onSuccess("Waiting for apporove");
+                        return onSuccess("Waiting for apporove", apporoveResult._id);
                     }
                     return onSuccess("fail", "Has error")
                 }

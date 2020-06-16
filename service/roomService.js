@@ -115,22 +115,16 @@ module.exports = {
             if (result.ok == 1) return true;
             return false;
         } else {
-            if (requestID != null) {
-
-                var result = await ApproveList.deleteOne({
-                    _id: requestID
-                })
-                if (result.ok == 1) return true;
-                return false;
-            } else {
-                await ApproveList.deleteOne({
-                    "hostID": accountID,
-                    "roomID": roomID
-                })
-                var result = await Room.findOneAndUpdate({ _id: roomID }, { $pull: { "pendingRequest": accountID }, $push: { "blacklist": accountID } })
-                if (result.ok == 1) return true;
-                return false;
+            var deleteResponse = await ApproveList.deleteOne({
+                _id: requestID
+            })
+            
+            if (deleteResponse.ok == 1) {
+                var result = await Room.findOneAndUpdate({ _id: roomID }, { $pull: { "pendingRequest": accountID } })
+                return true;
             }
+            return false;
+            
         }
 
     },
