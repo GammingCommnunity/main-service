@@ -13,10 +13,17 @@ var _ = require('lodash');
 
 module.exports = resolvers = {
     Query: {
-        searchRoom: async (root, { query, option }, ctx) => {
+        searchRoom: async (root, { query, gameID }, ctx) => {
             //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
-            var result = await searchByCode(query);
-            return result.length > 0 ? result : await searchByRoomName(query); 
+            if (gameID == (null || undefined)) {
+                var result = await searchByCode(query);
+                return result.length > 0 ? result : await searchByRoomName(query); 
+            }
+            else {
+                var result = await searchByCode(query,gameID);
+                return result.length > 0 ? result : await searchByRoomName(query, gameID); 
+            }
+            
 
         },
         getRoomInfo: async (_, { roomID }) => {

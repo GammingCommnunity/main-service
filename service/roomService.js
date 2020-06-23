@@ -9,20 +9,51 @@ var crypto = require("crypto");
 
 module.exports = {
     generateInviteCode: () => crypto.randomBytes(3).toString('hex'),
-    searchByCode: async (query) => {
+    searchByCode: async (query, gameID) => {
+        if (gameID != (null || undefined)) {
+            return await Room.aggregate([
+                { $match: { $and: [{ "code": query }, { "game.gameID": gameID } ]} },
+                
+                //{$unwind:"$member"},
+                {
+                    $addFields: {
+                        countMember: { $size: "$member" },
+                    }
+                },
+
+            ])
+        }
         return await Room.aggregate([
             { $match: { "code": query } },
+
             //{$unwind:"$member"},
             {
                 $addFields: {
                     countMember: { $size: "$member" },
                 }
-            }
-        ])  
+            },
+
+        ])
     },
-    searchByRoomName: async (query) => {
+    searchByRoomName: async (query, gameID) => {
+        if (gameID != (null || undefined)) {
+            return await Room.aggregate([
+
+                { $match: { $and: [{ "roomName": new RegExp(`${query}`, 'i') }, { "game.gameID": gameID }]} },
+           
+                //{$unwind:"$member"},
+
+                {
+                    $addFields: {
+                        countMember: { $size: "$member" },
+                    }
+                }
+            ])
+        }
         return await Room.aggregate([
+
             { $match: { "roomName": new RegExp(`${query}`, 'i') } },
+
             //{$unwind:"$member"},
 
             {
@@ -42,7 +73,7 @@ module.exports = {
             return false;
         }
     },
-    initGroupPost: async (groupID,needApproved, token) => {
+    initGroupPost: async (groupID, needApproved, token) => {
         var query = `
             mutation{
                 initGroupPost(groupID:"${groupID}",approveFirst:${needApproved}){
@@ -57,7 +88,7 @@ module.exports = {
             body: JSON.stringify({ query: query }),
         }).then((v) => v.json()).then((v) => {
             console.log(v);
-            
+
             if (v.data.status == 200) return true;
             return false;
         });
@@ -141,13 +172,13 @@ module.exports = {
             var deleteResponse = await ApproveList.deleteOne({
                 _id: requestID
             })
-            
+
             if (deleteResponse.ok == 1) {
                 var result = await Room.findOneAndUpdate({ _id: roomID }, { $pull: { "pendingRequest": accountID } })
                 return true;
             }
             return false;
-            
+
         }
 
     },

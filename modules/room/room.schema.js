@@ -30,7 +30,7 @@ module.exports = typeDef = gql`
         """
         getAllRoom(page:Int!,limit:Int!):[Room]
         getRoomInfo(roomID:String):Room
-        searchRoom(query:String!):[Room]
+        searchRoom(query:String!,gameID:String):[Room]
         getRoomCreateByUser:[Room]
         changeHost(oldHost:String!,newHost:String!):[Room]
         getRoomByGame(limit:Int!,page:Int!,gameID:String!,groupSize:GroupSize!):[Room]
