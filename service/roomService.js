@@ -12,8 +12,8 @@ module.exports = {
     searchByCode: async (query, gameID) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
-                { $match: { $and: [{ "code": query }, { "game.gameID": gameID } ]} },
-                
+                { $match: { $and: [{ "code": query }, { "game.gameID": gameID }, { isPrivate: false }] } },
+
                 //{$unwind:"$member"},
                 {
                     $addFields: {
@@ -24,7 +24,7 @@ module.exports = {
             ])
         }
         return await Room.aggregate([
-            { $match: { "code": query } },
+            { $match: { $and: [{ "code": query }, { isPrivate: false }] } },
 
             //{$unwind:"$member"},
             {
@@ -39,8 +39,15 @@ module.exports = {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
 
-                { $match: { $and: [{ "roomName": new RegExp(`${query}`, 'i') }, { "game.gameID": gameID }]} },
-           
+                {
+                    $match: {
+                        $and: [
+                            { "roomName": new RegExp(`${query}`, 'i') },
+                            { "game.gameID": gameID },
+                            { isPrivate: false }]
+                    }
+                },
+
                 //{$unwind:"$member"},
 
                 {
@@ -52,7 +59,16 @@ module.exports = {
         }
         return await Room.aggregate([
 
-            { $match: { "roomName": new RegExp(`${query}`, 'i') } },
+            {
+                $match:
+                {
+                    $and: [
+                        { "roomName": new RegExp(`${query}`, 'i') },
+                        { isPrivate: false }
+                    ]
+                }
+
+            },
 
             //{$unwind:"$member"},
 
