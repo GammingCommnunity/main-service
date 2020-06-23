@@ -1,5 +1,5 @@
 const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
-    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode } = require('../../service/roomService');
+    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode,searchByRoomName,searchByCode } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
@@ -14,33 +14,9 @@ var _ = require('lodash');
 module.exports = resolvers = {
     Query: {
         searchRoom: async (root, { query, option }, ctx) => {
-            if (option == "byCode") {
-                return await Room.aggregate([
-                    { $match: { "code": query } },
-                    //{$unwind:"$member"},
-                    {
-                        $addFields: {
-                            countMember: { $size: "$member" },
-                        }
-                    }
-                ])
-            }
-            else {
-                return await Room.aggregate([
-                    { $match: { "roomName": new RegExp(`${query}`, 'i') } },
-                    //{$unwind:"$member"},
-                    
-                    {
-                        $addFields: {
-                            countMember: { $size: "$member" },
-                        }
-                    }
-                ])
-
-
-                //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
-            }
-
+            //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
+            var result = await searchByCode(query);
+            return result.length > 0 ? result : await searchByRoomName(query); 
 
         },
         getRoomInfo: async (_, { roomID }) => {

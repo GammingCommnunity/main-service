@@ -9,6 +9,29 @@ var crypto = require("crypto");
 
 module.exports = {
     generateInviteCode: () => crypto.randomBytes(3).toString('hex'),
+    searchByCode: async (query) => {
+        return await Room.aggregate([
+            { $match: { "code": query } },
+            //{$unwind:"$member"},
+            {
+                $addFields: {
+                    countMember: { $size: "$member" },
+                }
+            }
+        ])  
+    },
+    searchByRoomName: async (query) => {
+        return await Room.aggregate([
+            { $match: { "roomName": new RegExp(`${query}`, 'i') } },
+            //{$unwind:"$member"},
+
+            {
+                $addFields: {
+                    countMember: { $size: "$member" },
+                }
+            }
+        ])
+    },
     checkHost: async (roomID, userID) => {
         const result = await Room.find({ "_id": roomID, "hostID": userID }).countDocuments();
 
