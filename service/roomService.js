@@ -9,7 +9,7 @@ var crypto = require("crypto");
 
 module.exports = {
     generateInviteCode: () => crypto.randomBytes(3).toString('hex'),
-    searchByCode: async (query, gameID) => {
+    searchByCode: async (query, gameID,accountID) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
                 { $match: { $and: [{ "code": query }, { "game.gameID": gameID }, { isPrivate: false }] } },
@@ -18,6 +18,12 @@ module.exports = {
                 {
                     $addFields: {
                         countMember: { $size: "$member" },
+                        isJoin: {
+                            $in: [accountID, "$member"]
+                        },
+                        isRequest: {
+                            $in: [accountID, "$pendingRequest"]
+                        },
                     }
                 },
 
@@ -30,12 +36,18 @@ module.exports = {
             {
                 $addFields: {
                     countMember: { $size: "$member" },
+                    isJoin: {
+                        $in: [accountID, "$member"]
+                    },
+                    isRequest: {
+                        $in: [accountID, "$pendingRequest"]
+                    },
                 }
             },
 
         ])
     },
-    searchByRoomName: async (query, gameID) => {
+    searchByRoomName: async (query, gameID,accountID) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
 
@@ -53,6 +65,12 @@ module.exports = {
                 {
                     $addFields: {
                         countMember: { $size: "$member" },
+                        isJoin: {
+                            $in: [accountID, "$member"]
+                        },
+                        isRequest: {
+                            $in: [accountID, "$pendingRequest"]
+                        },
                     }
                 }
             ])
@@ -75,6 +93,12 @@ module.exports = {
             {
                 $addFields: {
                     countMember: { $size: "$member" },
+                    isJoin: {
+                        $in: [accountID, "$member"]
+                    },
+                    isRequest: {
+                        $in: [accountID, "$pendingRequest"]
+                    },
                 }
             }
         ])
