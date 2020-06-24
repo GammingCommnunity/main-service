@@ -11,9 +11,9 @@ const Rooms = mongoose.Schema({
     type:String,
     unique: true,
   },
-  isPrivate: {
-    type: Boolean,
-    default: false
+  roomType: {
+    type: String,
+    default:"public"
   },
   game: {
     gameID: String,

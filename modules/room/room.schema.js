@@ -4,7 +4,7 @@ module.exports = typeDef = gql`
         _id:ID!
         roomName:String!
         hostID:String
-        isPrivate:Boolean
+        roomType:RoomTypeEnum
         description:String
         game:gameInfo
         member:[String]
@@ -66,7 +66,7 @@ module.exports = typeDef = gql`
         """
         removeRoom(roomID:ID!):ResultCRUD
         chatRoom(roomID:String!,messages:MessageInput):ResultCRUD
-        joinRoom(roomID:String!):ResultCRUD
+        joinRoom(roomID:String!,roomType:RoomTypeEnum!,code:String):ResultCRUD
         
         """ 
         ***Thay đổi thông tin phòng***

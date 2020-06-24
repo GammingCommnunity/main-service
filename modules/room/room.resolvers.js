@@ -59,7 +59,7 @@ module.exports = resolvers = {
         },
         getRoomByGame: async (root, { limit, page, gameID, groupSize }, context) => {
             var accountID = getUserID(context);
-           // const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
+            // const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
             const largeGroup = [];
 
@@ -78,6 +78,7 @@ module.exports = resolvers = {
             const gg = groupSize == "small" ? 4 : groupSize == "large" ? 8 : 0;
             const myAggregate = Room.aggregate([
                 { $match: { "game.gameID": gameID }, },
+
                 { $skip: page <= 1 ? 0 : (page * 10 - 10) },
                 { $limit: limit },
 
@@ -100,10 +101,16 @@ module.exports = resolvers = {
                 },*/
                 {
                     "$project": {
-                        "data":"$$ROOT",
+                        "data": "$$ROOT",
                         "additionData": {
                             "$cond": [
-                                { $eq: [gg, 0] },
+                                {
+                                    $and: [
+                                        { $eq: [gg, 0] },
+                                        { $ne: ["$roomType", "hidden"] }
+                                    ]
+
+                                },
                                 //normal
                                 exp,
                                 {
@@ -117,7 +124,8 @@ module.exports = resolvers = {
                                                         { $lte: ["$maxOfMember", 8] },
                                                         {
                                                             $gte: ["$maxOfMember", 4]
-                                                        }
+                                                        },
+                                                        { $ne: ["$roomType", "hidden"] }
                                                     ]
                                                 },
                                                 exp, null
@@ -126,8 +134,13 @@ module.exports = resolvers = {
                                         //large
                                         {
                                             $cond: [
+
                                                 {
-                                                    $gte: ["$maxOfMember", 8]
+                                                    $and: [
+                                                        { $gte: ["$maxOfMember", 8] },
+                                                        { $ne: ["$roomType", "hidden"] }
+                                                    ]
+
                                                 },
                                                 exp, null
                                             ]
@@ -150,49 +163,19 @@ module.exports = resolvers = {
                     $replaceRoot: {
                         newRoot: {
                             $mergeObjects: [
-                             "$data" ,
+                                "$data",
                                 "$additionData"]
                         }
                     }
 
                 },
-              
-        
+
+
             ])
             var res = await Room.aggregatePaginate(myAggregate);
-  
+
             return res.docs
 
-            /* var mapped = _.forEach(result, async (value) => {
-                 // get member
-                 var member = _.get(value, "member");
-                 var pending = _.get(value, "pendingRequest");
-                 var maxOfMember = _.get(value, "maxOfMember");
-                 
-                 // check if user is member
-                 if (_.get(value, "hostID") == accountID) {
-                     _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
-                     return;
-                 } else {
-                     if (_.includes(member, accountID)) {
-                         _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
-                     }
-                     if (_.includes(pending, accountID)) {
-                         _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
-                     }
-                     else {
-                         _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
-                     }
-                 }
-                
- 
-                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
-             })
-             if (groupSize == "none") {
-                 return mapped;
-             }
-             else return groupSize == "large" ? largeGroup : smallGroup;*/
-            //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
         roomManager: async (_, { }, context) => {
             var accountID = getUserID(context);
@@ -217,24 +200,28 @@ module.exports = resolvers = {
                 member: member.push(accountID),
                 messages: []
             }
-            console.log(gameName);
+
             if (!gameName) {
                 return onError('fail', "Game ID not exist! ")
             }
 
             var gameInfo = _.assign(roomInput.game, { gameName: gameName })
-            var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: member, code: code });
+            var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: member });
 
             return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
                 if (v.length > 0) {
                     return onError('fail', "This name already taken")
                 }
-                else return Room.create(roomInfo).then(async (value) => {
+                else
+                    if (roomInput.roomName == "") {
+                        return onError('fail', "Room name can't null.")
+                    }
+                return Room.create(roomInfo).then(async (value) => {
                     return RoomChats.create(roomChatInput).then(async (v) => {
                         return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then(async (v) => {
                             // init post model
                             await initGroupPost(value._id, needApproved, context.token);
-                            return onSuccess("Create success!", code);
+                            return onSuccess("Create room success!");
 
                         })
 
@@ -242,7 +229,7 @@ module.exports = resolvers = {
                 }).catch(err => {
                     console.log(err);
 
-                    return onError("Create failed!")
+                    return onError("Create room failed!")
                 })
             })
         },
@@ -268,7 +255,6 @@ module.exports = resolvers = {
 
                 var data = {
                     "roomName": newData.roomName,
-                    "isPrivate": newData.isPrivate,
                     "description": newData.description,
                     "member": newData.member,
                     "maxOfMember": newData.maxOfMember,
@@ -285,7 +271,7 @@ module.exports = resolvers = {
         * @param {roomID} "room user join" 
         * @param {Info} "info need for approve list"
         */
-        async joinRoom(root, { roomID }, context) {
+        async joinRoom(root, { roomID, roomType, code }, context) {
             //check userID is not host
             var accountID = getUserID(context);
 

@@ -8,7 +8,7 @@ module.exports = typeDef = gql`
   }
   input RoomInput{
       roomName:String!
-      isPrivate:Boolean!
+      roomType:RoomTypeEnum!
       description:String
       member:[String]
       maxOfMember:Int!

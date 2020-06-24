@@ -12,7 +12,7 @@ module.exports = {
     searchByCode: async (query, gameID,accountID) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
-                { $match: { $and: [{ "code": query }, { "game.gameID": gameID }, { isPrivate: false }] } },
+                { $match: { $and: [{ "code": query }, { "game.gameID": gameID }, { roomType: {$ne:"hidden"} }] } },
 
                 //{$unwind:"$member"},
                 {
@@ -30,7 +30,7 @@ module.exports = {
             ])
         }
         return await Room.aggregate([
-            { $match: { $and: [{ "code": query }, { isPrivate: false }] } },
+            { $match: { $and: [{ "code": query }, { roomType: { $ne: "hidden" } }] } },
 
             //{$unwind:"$member"},
             {
@@ -56,7 +56,7 @@ module.exports = {
                         $and: [
                             { "roomName": new RegExp(`${query}`, 'i') },
                             { "game.gameID": gameID },
-                            { isPrivate: false }]
+                            { roomType: { $ne: "hidden" } }]
                     }
                 },
 
@@ -82,7 +82,7 @@ module.exports = {
                 {
                     $and: [
                         { "roomName": new RegExp(`${query}`, 'i') },
-                        { isPrivate: false }
+                        { roomType: { $ne: "hidden" } }
                     ]
                 }
 

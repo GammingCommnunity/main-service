@@ -77,4 +77,9 @@ module.exports = typeDef = gql`
         byName
         byID
     }
+    enum RoomTypeEnum{
+        public
+        private
+        hidden
+    }
 `;
