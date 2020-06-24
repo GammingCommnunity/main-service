@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
+const mongooseAggregate = require('mongoose-aggregate-paginate-v2');
 const DataLoader = require('dataloader');
 require('dotenv').config();
 var roomLogo = process.env.default_logo;
@@ -51,6 +52,7 @@ const Rooms = mongoose.Schema({
 })
 
 Rooms.plugin(mongoosePaginate);
+Rooms.plugin(mongooseAggregate);
 const getRoomLoader= () => new DataLoader(
   (userID,roomID) => {
     return Room.aggregate([{ $match: { "member": userID, "hostID": { $ne: userID }, "_id": roomID } }]);

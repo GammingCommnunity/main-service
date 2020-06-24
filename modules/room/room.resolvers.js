@@ -1,5 +1,5 @@
 const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
-    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode,searchByRoomName,searchByCode } = require('../../service/roomService');
+    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode, searchByRoomName, searchByCode } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
@@ -17,13 +17,13 @@ module.exports = resolvers = {
             //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
             if (gameID == (null || undefined)) {
                 var result = await searchByCode(query);
-                return result.length > 0 ? result : await searchByRoomName(query); 
+                return result.length > 0 ? result : await searchByRoomName(query);
             }
             else {
-                var result = await searchByCode(query,gameID);
-                return result.length > 0 ? result : await searchByRoomName(query, gameID); 
+                var result = await searchByCode(query, gameID);
+                return result.length > 0 ? result : await searchByRoomName(query, gameID);
             }
-            
+
 
         },
         getRoomInfo: async (_, { roomID }) => {
@@ -58,39 +58,139 @@ module.exports = resolvers = {
         },
         getRoomByGame: async (root, { limit, page, gameID, groupSize }, context) => {
             var accountID = getUserID(context);
-            const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
+           // const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
             const largeGroup = [];
 
-            var mapped = _.forEach(result, async (value) => {
-                // get member
-                var member = _.get(value, "member");
-                var pending = _.get(value, "pendingRequest");
-                var maxOfMember = _.get(value, "maxOfMember");
+            const exp = {
 
-                // check if user is member
-                if (_.get(value, "hostID") == accountID) {
-                    _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
-                    return;
-                } else {
-                    if (_.includes(member, accountID) && _.get(value, "hostID") != accountID) {
-                        _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
-                    }
-                    if (_.includes(pending, accountID)) {
-                        _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
-                    }
-                    else {
-                        _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
-                    }
-                }
-               
-
-                return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
-            })
-            if (groupSize == "none") {
-                return mapped;
+                "isJoin": {
+                    $in: [accountID, "$member"]
+                },
+                "isRequest": {
+                    $in: [accountID, "$pendingRequest"]
+                },
+                "countMember": { $size: "$member" }
             }
-            else return groupSize == "large" ? largeGroup : smallGroup;
+
+
+            const gg = groupSize == "small" ? 4 : groupSize == "large" ? 8 : 0;
+            const myAggregate = Room.aggregate([
+                { $match: { "game.gameID": gameID }, },
+                { $skip: page <= 1 ? 0 : (page * 10 - 10) },
+                { $limit: limit },
+
+                /*{
+                    $addFields: {
+                        "isJoin": {
+                            $cond: {
+                                if: {
+                                    "hostID": { $eq: [accountID, null] }
+                                },
+                                then: true,
+                                else: false
+                            }
+                        },
+                        "isRequest": {
+                            $in: [accountID, "$pendingRequest"]
+                        },
+                        "countMember": { $size: "$member" }
+                    }
+                },*/
+                {
+                    "$project": {
+                        "data":"$$ROOT",
+                        "additionData": {
+                            "$cond": [
+                                { $eq: [gg, 0] },
+                                //normal
+                                exp,
+                                {
+                                    "$cond": [
+                                        { $lte: [gg, 4] },
+                                        //small
+                                        {
+                                            $cond: [
+                                                {
+                                                    $and: [
+                                                        { $lte: ["$maxOfMember", 8] },
+                                                        {
+                                                            $gte: ["$maxOfMember", 4]
+                                                        }
+                                                    ]
+                                                },
+                                                exp, null
+                                            ]
+                                        },
+                                        //large
+                                        {
+                                            $cond: [
+                                                {
+                                                    $gte: ["$maxOfMember", 8]
+                                                },
+                                                exp, null
+                                            ]
+                                        },
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    $match: {
+                        "additionData": {
+                            "$exists": true,
+                            "$ne": null
+                        }
+                    }
+                },
+                {
+                    $replaceRoot: {
+                        newRoot: {
+                            $mergeObjects: [
+                             "$data" ,
+                                "$additionData"]
+                        }
+                    }
+
+                },
+              
+        
+            ])
+            var res = await Room.aggregatePaginate(myAggregate);
+  
+            return res.docs
+
+            /* var mapped = _.forEach(result, async (value) => {
+                 // get member
+                 var member = _.get(value, "member");
+                 var pending = _.get(value, "pendingRequest");
+                 var maxOfMember = _.get(value, "maxOfMember");
+                 
+                 // check if user is member
+                 if (_.get(value, "hostID") == accountID) {
+                     _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
+                     return;
+                 } else {
+                     if (_.includes(member, accountID)) {
+                         _.assign(value, { "isJoin": true, "isRequest": false, countMember: member.length })
+                     }
+                     if (_.includes(pending, accountID)) {
+                         _.assign(value, { "isJoin": false, "isRequest": true, countMember: member.length })
+                     }
+                     else {
+                         _.assign(value, { "isJoin": false, "isRequest": false, countMember: member.length })
+                     }
+                 }
+                
+ 
+                 return maxOfMember > 4 ? largeGroup.push(value) : smallGroup.push(value)
+             })
+             if (groupSize == "none") {
+                 return mapped;
+             }
+             else return groupSize == "large" ? largeGroup : smallGroup;*/
             //return Room.aggregate([{ $match: { "game.gameID": gameID } }]);
         },
         roomManager: async (_, { }, context) => {
@@ -105,12 +205,12 @@ module.exports = resolvers = {
 
     },
     Mutation: {
-        createRoom: async (root, { roomInput, needApproved}, context) => {
+        createRoom: async (root, { roomInput, needApproved }, context) => {
             var accountID = getUserID(context);
             var code = generateInviteCode();
             var member = roomInput.member;
             var gameName = await gameService.getGameNameById(roomInput.game.gameID);
-           
+
             var roomChatInput = {
                 roomID: "",
                 member: member.push(accountID),
@@ -118,10 +218,10 @@ module.exports = resolvers = {
             }
             console.log(gameName);
             if (!gameName) {
-                return onError('fail', "Game ID not exist! ") 
+                return onError('fail', "Game ID not exist! ")
             }
 
-            var gameInfo = _.assign(roomInput.game, { gameName: gameName })        
+            var gameInfo = _.assign(roomInput.game, { gameName: gameName })
             var roomInfo = _.assign({}, roomInput, { hostID: accountID, member: member, code: code });
 
             return Room.aggregate([{ $match: { "roomName": roomInput.roomName } }]).then((v) => {
@@ -132,7 +232,7 @@ module.exports = resolvers = {
                     return RoomChats.create(roomChatInput).then(async (v) => {
                         return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then(async (v) => {
                             // init post model
-                            await initGroupPost(value._id, needApproved,context.token);
+                            await initGroupPost(value._id, needApproved, context.token);
                             return onSuccess("Create success!", code);
 
                         })

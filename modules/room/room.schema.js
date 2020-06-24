@@ -17,6 +17,16 @@ module.exports = typeDef = gql`
         isJoin:Boolean
         isRequest:Boolean
     }
+    type RoomAggregate{
+        data:Room,
+        additionData:AdditionData
+        
+    }
+    type AdditionData{
+        countMember:Int
+        isJoin:Boolean
+        isRequest:Boolean
+    }
     type gameInfo{
         gameID:String!
         gameName:String!
