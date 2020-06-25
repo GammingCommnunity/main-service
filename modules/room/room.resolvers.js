@@ -107,7 +107,8 @@ module.exports = resolvers = {
                                 {
                                     $and: [
                                         { $eq: [gg, 0] },
-                                        { $ne: ["$roomType", "hidden"] }
+                                        { $ne: ["$roomType", "hidden"] },
+                                        { $eq: [{ $in: [accountID, "$member"]},false]}
                                     ]
 
                                 },
@@ -125,7 +126,8 @@ module.exports = resolvers = {
                                                         {
                                                             $gte: ["$maxOfMember", 4]
                                                         },
-                                                        { $ne: ["$roomType", "hidden"] }
+                                                        { $ne: ["$roomType", "hidden"] },
+                                                        { $eq: [{ $in: [accountID, "$member"] }, false] }
                                                     ]
                                                 },
                                                 exp, null
@@ -138,7 +140,8 @@ module.exports = resolvers = {
                                                 {
                                                     $and: [
                                                         { $gte: ["$maxOfMember", 8] },
-                                                        { $ne: ["$roomType", "hidden"] }
+                                                        { $ne: ["$roomType", "hidden"] },
+                                                        { $eq: [{ $in: [accountID, "$member"] }, false] }
                                                     ]
 
                                                 },
@@ -267,9 +270,9 @@ module.exports = resolvers = {
         },
         /**
         * 
-        * @param {userID} "user join room" 
-        * @param {roomID} "room user join" 
-        * @param {Info} "info need for approve list"
+        * @userID  "user join room"
+        * @roomID  "room user join"
+        * @Info "info need for approve list"
         */
         async joinRoom(root, { roomID, roomType, code }, context) {
             //check userID is not host
@@ -285,8 +288,34 @@ module.exports = resolvers = {
                 const inPending = await inPendingList(roomID, accountID); // has value in pendingRequest
 
                 // check already a member
+
                 if (await isJoinRoom(roomID, accountID)) {
                     return onError('fail', "You are member!")
+                }
+                else if (roomType == "public") {
+                    // join direct
+                    return Room.findOneAndUpdate({ "_id": roomID }, { "member": { $push: accountID } }).then((_) => {
+                        const newComer = {
+                            "type": 1,
+                            "roomName": roomInfo.roomName,
+                            "hostID": info.hostID,
+                            "userID": apporoveResult.userID,
+                            "joinTime": apporoveResult.joinTime,
+                            "message": `Welcome to ${roomInfo.roomName}`,
+                            "isApprove": true
+                        }
+                        pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
+                    });
+
+                }
+                else if ("roomType" == "hidden") {
+                    // hidden room
+                    if (code == (null || undefined)) {
+                        return onError('fail', "You can't join this room");
+                    }
+                    else {
+                        
+                    }
                 }
                 // check if in pending or has request
                 else if (isRequest || inPending) {
@@ -299,14 +328,16 @@ module.exports = resolvers = {
                         userID: accountID,
                         roomID: roomID
                     }
+                    // add user request to approveList
                     const apporoveResult = await addApprove(info);
                     if (_ != null) {
-                        const _ = await updateRoom("", roomID, { $push: { "pendingRequest": accountID } });
+                        const addToPending = await updateRoom("", roomID, { $push: { "pendingRequest": accountID } });
                         const newComer = {
                             "type": 2,
                             "roomName": roomInfo.roomName,
-                            "hostID": info.hostID,
+                            "hostID": roomInfo.hostID,
                             "userID": apporoveResult.userID,
+                            "message": "Your request has been recorded. Wait for accept.",
                             "joinTime": apporoveResult.joinTime,
                             "isApprove": false
                         }

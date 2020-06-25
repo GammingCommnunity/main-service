@@ -13,6 +13,7 @@ module.exports= typeDef = gql`
         roomName:String
         userID:String
         joinTime:Date
+        message:String
         isApprove:Boolean
     }
     type messageSubscription{
