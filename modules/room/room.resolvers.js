@@ -13,16 +13,16 @@ var _ = require('lodash');
 
 module.exports = resolvers = {
     Query: {
-        searchRoom: async (root, { query, gameID }, ctx) => {
+        searchRoom: async (root, { query, gameID,hideJoined }, ctx) => {
             var accountID = getUserID(ctx);
             //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
             if (gameID == (null || undefined)) {
-                var result = await searchByCode(query);
-                return result.length > 0 ? result : await searchByRoomName(query);
+                var result = await searchByCode(query, hideJoined);
+                return result.length > 0 ? result : await searchByRoomName(query, "","",hideJoined);
             }
             else {
-                var result = await searchByCode(query, gameID, accountID);
-                return result.length > 0 ? result : await searchByRoomName(query, gameID, accountID);
+                var result = await searchByCode(query, gameID, accountID, hideJoined);
+                return result.length > 0 ? result : await searchByRoomName(query, gameID, accountID, hideJoined);
             }
 
 
@@ -57,7 +57,8 @@ module.exports = resolvers = {
 
             return Room.aggregate([{ $match: { "hostID": accountID } }]);
         },
-        getRoomByGame: async (root, { limit, page, gameID, groupSize }, context) => {
+        getRoomByGame: async (root, { limit, page, gameID, groupSize, hideJoined }, context) => {
+            
             var accountID = getUserID(context);
             // const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
@@ -76,11 +77,12 @@ module.exports = resolvers = {
 
 
             const gg = groupSize == "small" ? 4 : groupSize == "large" ? 8 : 0;
+            //const cond = hideJoined == true ? { $eq: [{ $in: [accountID, "$member"] }, false] } : { $eq: [{ $in: [accountID, "$member"] }, false] }
             const myAggregate = Room.aggregate([
                 { $match: { "game.gameID": gameID }, },
-
                 { $skip: page <= 1 ? 0 : (page * 10 - 10) },
                 { $limit: limit },
+                
 
                 /*{
                     $addFields: {
@@ -99,6 +101,7 @@ module.exports = resolvers = {
                         "countMember": { $size: "$member" }
                     }
                 },*/
+              
                 {
                     "$project": {
                         "data": "$$ROOT",
@@ -108,7 +111,8 @@ module.exports = resolvers = {
                                     $and: [
                                         { $eq: [gg, 0] },
                                         { $ne: ["$roomType", "hidden"] },
-                                        { $eq: [{ $in: [accountID, "$member"]},false]}
+                                        hideJoined ? { $eq: [{ $in: [accountID, "$member"] }, false] } : {}
+
                                     ]
 
                                 },
@@ -127,7 +131,8 @@ module.exports = resolvers = {
                                                             $gte: ["$maxOfMember", 4]
                                                         },
                                                         { $ne: ["$roomType", "hidden"] },
-                                                        { $eq: [{ $in: [accountID, "$member"] }, false] }
+                                                        hideJoined ? { $eq: [{ $in: [accountID, "$member"] }, false] } : {}
+                                                    
                                                     ]
                                                 },
                                                 exp, null
@@ -141,7 +146,7 @@ module.exports = resolvers = {
                                                     $and: [
                                                         { $gte: ["$maxOfMember", 8] },
                                                         { $ne: ["$roomType", "hidden"] },
-                                                        { $eq: [{ $in: [accountID, "$member"] }, false] }
+                                                        hideJoined ? { $eq: [{ $in: [accountID, "$member"] }, false] } : {}
                                                     ]
 
                                                 },
@@ -156,9 +161,10 @@ module.exports = resolvers = {
                 },
                 {
                     $match: {
+                       
                         "additionData": {
                             "$exists": true,
-                            "$ne": null
+                            "$ne": null,
                         }
                     }
                 },

@@ -9,10 +9,20 @@ var crypto = require("crypto");
 
 module.exports = {
     generateInviteCode: () => crypto.randomBytes(3).toString('hex'),
-    searchByCode: async (query, gameID,accountID) => {
+    searchByCode: async (query, gameID, accountID, hideJoined = true) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
-                { $match: { $and: [{ "code": query }, { "game.gameID": gameID }, { roomType: {$ne:"hidden"} }] } },
+                {
+                    $match: {
+                        $and: [
+                            { "code": query },
+                            { "game.gameID": gameID },
+                            { roomType: { $ne: "hidden" } },
+
+                            hideJoined ? { "member": { $nin: [accountID] } } : {}
+                        ]
+                    }
+                },
 
                 //{$unwind:"$member"},
                 {
@@ -30,7 +40,15 @@ module.exports = {
             ])
         }
         return await Room.aggregate([
-            { $match: { $and: [{ "code": query }, { roomType: { $ne: "hidden" } }] } },
+            {
+                $match: {
+                    $and: [
+                        { "code": query },
+                        { roomType: { $ne: "hidden" } },
+                        hideJoined ? { "member": { $nin: [accountID] } } : {}
+                    ]
+                }
+            },
 
             //{$unwind:"$member"},
             {
@@ -47,7 +65,7 @@ module.exports = {
 
         ])
     },
-    searchByRoomName: async (query, gameID,accountID) => {
+    searchByRoomName: async (query, gameID, accountID, hideJoined= true) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
 
@@ -56,7 +74,10 @@ module.exports = {
                         $and: [
                             { "roomName": new RegExp(`${query}`, 'i') },
                             { "game.gameID": gameID },
-                            { roomType: { $ne: "hidden" } }]
+                            { roomType: { $ne: "hidden" } },
+                            hideJoined ? { "member": { $nin: [accountID] } } : {}
+                        ],
+                        
                     }
                 },
 
@@ -82,13 +103,12 @@ module.exports = {
                 {
                     $and: [
                         { "roomName": new RegExp(`${query}`, 'i') },
-                        { roomType: { $ne: "hidden" } }
+                        { roomType: { $ne: "hidden" } },
+                        hideJoined ? { "member": { $nin: [accountID] } } : {}
                     ]
                 }
 
             },
-
-            //{$unwind:"$member"},
 
             {
                 $addFields: {
