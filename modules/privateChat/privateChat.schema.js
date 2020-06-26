@@ -4,6 +4,7 @@ module.exports = typeDef = gql`
         type PrivateChat{
             _id:ID
             member:[String]
+            isHost:Boolean
             latest_message:PrivateMessagesType
         }
 
@@ -11,7 +12,7 @@ module.exports = typeDef = gql`
             """
             *** Lấy tất cả các chát riêng tư ***
             """
-            getAllPrivateChat:[PrivateChat]
+            getAllPrivateChat(page:Int!,limit:Int!):[PrivateChat]
             """
             *** Lấy tất cả các tin nhắn, có pagiante , page tăng dần từ 1 -> n,limit (muốn lấy bao nhiêu tin nhắn) ***
             """

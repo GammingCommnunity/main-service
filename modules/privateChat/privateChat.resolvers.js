@@ -7,27 +7,34 @@ const { getUserID } = require('./..//../src/util');
 const subService = require('../../service/subService')
 module.exports = resolvers = {
     Query: {
-        getAllPrivateChat: async (root, { }, context) => {
+        getAllPrivateChat: async (root, { page , limit }, context) => {
             //subService.getAccountsInfo(context.token,)
             var accountID = getUserID(context);
             
             return ChatPrivate.aggregate([
-                { $match: { 'member': { $eq: accountID } } },
-                { $unwind: "$member" },
-                { $unwind: "$messages" },
+                
+                //{ $unwind: "$member" },
+               // { $unwind: "$messages" },
+                { $skip: page <= 1 ? 0 : (page * 10) },
+                { $limit: limit },
                 {
-                    $group: {
-                        _id: "$_id",
-                        member: { $addToSet: "$member" },
-                        latest_message: { $last: "$messages" }
-                    },
+                    $project: {                        
+                        isHost: {
+                            $cond: [
+                                { $eq: ["$host", accountID] },
+                                true,
+                                false
+                            ]
+                        },
+                        member:"$member",
+                        latest_message: { $arrayElemAt: ["$messages", -1]}
+                        
+                    }
                 },
-
+               
             ])
 
-            //  { $unwind: "$messages" }
-            //    find({ 'member': accountID }).select('_id member')
-            //
+            //return ChatPrivate.find({"member":{$in:[accountID]}});
         },
         getPrivateChatInfo: async (_, { roomID }) => {
             var member = [];
@@ -101,7 +108,7 @@ module.exports = resolvers = {
             var newInput = _.assign({}, input, { "host":currentID,"member": member });
 
             return ChatPrivate.create(newInput).then((v) => {
-                return onSuccess("Create success!")
+                return onSuccess("Create success!",v._id)
             }).catch((v) => {
                 return onError('fail', "Create fail...")
             });
