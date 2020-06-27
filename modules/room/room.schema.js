@@ -16,6 +16,7 @@ module.exports = typeDef = gql`
         countMember:Int
         isJoin:Boolean
         isRequest:Boolean
+        isFindingMember:Boolean
     }
     type RoomAggregate{
         data:Room,
@@ -48,6 +49,8 @@ module.exports = typeDef = gql`
         getRoomMedia(roomID:String):[Media]
         inviteToRoom(roomID:String!):ResultCRUD
         roomManager:[Room]
+        getAllRoomWithFinding:[Room]
+
    }
    type Mutation{
         changeGroupPhoto(groupID:String!,type:GroupImage,url:String!):ResultCRUD
@@ -78,6 +81,8 @@ module.exports = typeDef = gql`
         """
         addMember(roomID:String!,memberID:String!):ResultCRUD
         leaveRoom(roomID:String!):ResultCRUD
+        setFindingMember(roomID:String!):ResultCRUD
+        joinRoomWithFinding(roomID:String!,userID:String!):ResultCRUD
    }
 `
 // type RoomMessage{

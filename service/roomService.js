@@ -210,6 +210,7 @@ module.exports = {
             return false;
         }
     },
+    
     deleteRoom: async (roomID, userID) => {
         // implement check token here
         var result = await Room.deleteOne({ "_id": roomID });

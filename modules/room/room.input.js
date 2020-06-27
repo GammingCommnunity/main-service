@@ -16,5 +16,6 @@ module.exports = typeDef = gql`
       code:String
       roomLogo:String
       roomBackground:String
+      isFindingMember:Boolean
     }
 `

@@ -48,7 +48,9 @@ const Rooms = mongoose.Schema({
     type:String,
     default:""
   },
-  pendingRequest:[String]
+  pendingRequest: [String],
+  isFindingMember: Boolean,
+  
 })
 
 Rooms.plugin(mongoosePaginate);

@@ -7,33 +7,114 @@ const { getUserID } = require('./..//../src/util');
 const subService = require('../../service/subService')
 module.exports = resolvers = {
     Query: {
-        getAllPrivateChat: async (root, { page , limit }, context) => {
+        getAllPrivateChat: async (root, {ids, page , limit }, context) => {
             //subService.getAccountsInfo(context.token,)
             var accountID = getUserID(context);
+            console.log(ids);
             
             return ChatPrivate.aggregate([
                 
-                //{ $unwind: "$member" },
+               // { $unwind: "$member" },
                // { $unwind: "$messages" },
+                 
                 { $skip: page <= 1 ? 0 : (page * 10) },
                 { $limit: limit },
                 {
                     $project: {                        
-                        isHost: {
+                        "data": {
                             $cond: [
-                                { $eq: ["$host", accountID] },
-                                true,
-                                false
+                                ids.length == 0 ? true : false,
+                                //ids == [] ? true : false,
+                                {
+                                    _id: "$_id",
+                                    isHost: {
+                                        $cond: [
+                                            { $eq: ["$host", accountID] },
+                                            true,
+                                            false
+                                        ]
+                                    },
+
+                                    member: "$member",
+                                    latest_message: { $arrayElemAt: ["$messages", -1] }
+                                }, 
+                                {
+                                 
+                                   $cond: [
+                                        {
+                                            $and: [
+                                              //  { $in: [ids, "$member"] },
+                                                {
+                                                    $filter: {
+                                                        input: ids,
+                                                        as: "id",
+                                                        cond: {
+                                                            $and: [
+
+                                                                { $in: ["$$id", "$member"] },
+                                                                //{ $eq: ["$host", accountID] }
+                                                            ]
+
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    $or: [
+                                                        {
+                                                            $in: [accountID, "$member"]
+                                                        },
+                                                        {
+                                                            $eq: [accountID, "$host"]
+                                                        }
+                                                   ]
+                                               }
+                                            ]
+                                        },
+                                        {
+                                            _id: "$_id",
+                                            isHost: {
+                                                $cond: [
+                                                    { $eq: ["$host", accountID] },
+                                                    true,
+                                                    false
+                                                ]
+                                            },
+                                            host:"$host",
+                                            member: "$member",
+                                            latest_message: { $arrayElemAt: ["$messages", -1] }
+                                        },
+                                        null
+                                    ]
+                                    
+                                },
+                                
                             ]
-                        },
-                        member:"$member",
-                        latest_message: { $arrayElemAt: ["$messages", -1]}
+                        }
                         
                     }
                 },
+                
+                {
+                    $match: {
+                        "data": {
+                            "$exists": true,
+                            "$ne": null,
+                            
+                        },
+                        
+                    }
+                },
+                
+                {
+                    $replaceRoot: {
+                        newRoot: "$data"
+                    }
+
+                },
                
             ])
-
+          
+            
             //return ChatPrivate.find({"member":{$in:[accountID]}});
         },
         getPrivateChatInfo: async (_, { roomID }) => {

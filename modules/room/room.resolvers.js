@@ -13,12 +13,12 @@ var _ = require('lodash');
 
 module.exports = resolvers = {
     Query: {
-        searchRoom: async (root, { query, gameID,hideJoined }, ctx) => {
+        searchRoom: async (root, { query, gameID, hideJoined }, ctx) => {
             var accountID = getUserID(ctx);
             //Room.where('roomName').regex(new RegExp(`${query}`, 'i'))
             if (gameID == (null || undefined)) {
                 var result = await searchByCode(query, hideJoined);
-                return result.length > 0 ? result : await searchByRoomName(query, "","",hideJoined);
+                return result.length > 0 ? result : await searchByRoomName(query, "", "", hideJoined);
             }
             else {
                 var result = await searchByCode(query, gameID, accountID, hideJoined);
@@ -58,7 +58,7 @@ module.exports = resolvers = {
             return Room.aggregate([{ $match: { "hostID": accountID } }]);
         },
         getRoomByGame: async (root, { limit, page, gameID, groupSize, hideJoined }, context) => {
-            
+
             var accountID = getUserID(context);
             // const result = (await Room.paginate({ "game.gameID": gameID }, { limit: limit, page: page })).docs;
             const smallGroup = [];
@@ -82,7 +82,7 @@ module.exports = resolvers = {
                 { $match: { "game.gameID": gameID }, },
                 { $skip: page <= 1 ? 0 : (page * 10 - 10) },
                 { $limit: limit },
-                
+
 
                 /*{
                     $addFields: {
@@ -101,7 +101,7 @@ module.exports = resolvers = {
                         "countMember": { $size: "$member" }
                     }
                 },*/
-              
+
                 {
                     "$project": {
                         "data": "$$ROOT",
@@ -132,7 +132,7 @@ module.exports = resolvers = {
                                                         },
                                                         { $ne: ["$roomType", "hidden"] },
                                                         hideJoined ? { $eq: [{ $in: [accountID, "$member"] }, false] } : {}
-                                                    
+
                                                     ]
                                                 },
                                                 exp, null
@@ -161,7 +161,7 @@ module.exports = resolvers = {
                 },
                 {
                     $match: {
-                       
+
                         "additionData": {
                             "$exists": true,
                             "$ne": null,
@@ -195,6 +195,10 @@ module.exports = resolvers = {
             ]);
 
         },
+        getAllRoomWithFinding: async (_, { }, ctx) => {
+            return Room.find({ "isFindingMember": false });
+        }
+
 
     },
     Mutation: {
@@ -300,7 +304,7 @@ module.exports = resolvers = {
                 }
                 else if (roomType == "public") {
                     // join direct
-                    return Room.findOneAndUpdate({ "_id": roomID }, { "member": { $push: accountID } }).then((_) => {
+                    return Room.findOneAndUpdate({ "_id": roomID }, { $push: { "member": accountID } }).then((_) => {
                         const newComer = {
                             "type": 1,
                             "roomName": roomInfo.roomName,
@@ -320,7 +324,7 @@ module.exports = resolvers = {
                         return onError('fail', "You can't join this room");
                     }
                     else {
-                        
+
                     }
                 }
                 // check if in pending or has request
@@ -392,6 +396,22 @@ module.exports = resolvers = {
             }).catch((err) => {
                 return onError('fail', "Leave fail")
             })
+        },
+        setFindingMember: async (root, { roomID }, ctx) => {
+            var accountID = getUserID(ctx);
+            var result = await Room.findOneAndUpdate({ "_id": roomID, "hostID": accountID }, { $set: { isFindingMember: true } }, { new: true });
+            if (result == null) {
+                return onSuccess("Modify success!");
+            }
+            return onError('fail', "Modify fail")
+
+        },
+        joinRoomWithFinding: async (root, { roomID,userID }, ctx) => {
+            var result = await Room.findOneAndUpdate({ "_id": roomID, "isFindingMember": true }, { $push: { "member": userID } }, { new: true });
+            if (result == null) {
+                return onSuccess("Join success!");
+            }
+            return onError('fail', "Join fail")
         }
     }
 }

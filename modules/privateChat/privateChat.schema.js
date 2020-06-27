@@ -12,7 +12,7 @@ module.exports = typeDef = gql`
             """
             *** Lấy tất cả các chát riêng tư ***
             """
-            getAllPrivateChat(page:Int!,limit:Int!):[PrivateChat]
+            getAllPrivateChat(ids: [String] = [],page:Int! = 1,limit:Int! = 10):[PrivateChat]
             """
             *** Lấy tất cả các tin nhắn, có pagiante , page tăng dần từ 1 -> n,limit (muốn lấy bao nhiêu tin nhắn) ***
             """
