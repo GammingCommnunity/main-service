@@ -207,15 +207,22 @@ module.exports = resolvers = {
             var code = generateInviteCode();
             var member = roomInput.member;
             var gameName = await gameService.getGameNameById(roomInput.game.gameID);
-
+           
+            member.push(accountID)
+            var uniqueMember = member.filter((value, index, self) => self.indexOf(value) == index)
+          
+            
             var roomChatInput = {
                 roomID: "",
-                member: member.push(accountID),
+                member: uniqueMember,
                 messages: []
-            }
+            }            
 
             if (!gameName) {
                 return onError('fail', "Game ID not exist! ")
+            }
+            if (uniqueMember.length > roomInput.maxOfMember) {
+                return onError('fail', "Too many member, remove one. ")
             }
 
             var gameInfo = _.assign(roomInput.game, { gameName: gameName })
@@ -234,7 +241,7 @@ module.exports = resolvers = {
                         return RoomChats.findByIdAndUpdate(v._id, { "roomID": value._id }).then(async (v) => {
                             // init post model
                             await initGroupPost(value._id, needApproved, context.token);
-                            return onSuccess("Create room success!");
+                            return onSuccess("Create room success!", value._id);
 
                         })
 
