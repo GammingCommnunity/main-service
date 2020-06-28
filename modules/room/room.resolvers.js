@@ -197,6 +197,10 @@ module.exports = resolvers = {
         },
         getAllRoomWithFinding: async (_, { }, ctx) => {
             return Room.find({ "isFindingMember": false });
+        },
+        isRNTaken: async (_, { name }, ctx) => {
+            return (await Room.aggregate([{ $match: { "roomName": name } }])).length > 0;
+
         }
 
 

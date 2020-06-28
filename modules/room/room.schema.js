@@ -50,7 +50,7 @@ module.exports = typeDef = gql`
         inviteToRoom(roomID:String!):ResultCRUD
         roomManager:[Room]
         getAllRoomWithFinding:[Room]
-
+        isRNTaken(name:String!):Boolean
    }
    type Mutation{
         changeGroupImage(groupID:String!,avatar:String!,cover:String!):ResultCRUD
