@@ -202,6 +202,12 @@ module.exports = resolvers = {
 
     },
     Mutation: {
+        changeGroupImage: async (root, { groupID, avatar, cover }, context) => {
+            var currentID = getUserID(context);
+            return Room.findByIdAndUpdate(groupID, { $set: { roomLogo: avatar, roomBackground: cover } } ).then((v) => {
+                return onSuccess("Change success!")
+            }).catch((err) => onError("fail", "Change failded!"))
+        },
         createRoom: async (root, { roomInput, needApproved }, context) => {
             var accountID = getUserID(context);
             var code = generateInviteCode();

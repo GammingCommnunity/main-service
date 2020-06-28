@@ -29,7 +29,7 @@ module.exports = resolvers = {
                                     _id: "$_id",
                                     isHost: {
                                         $cond: [
-                                            { $eq: ["$host", accountID] },
+                                            { $or: [{ $eq: ["$host", accountID] },{$in:[accountID,"$member"]}]},
                                             true,
                                             false
                                         ]
@@ -181,11 +181,18 @@ module.exports = resolvers = {
     },
 
     Mutation: {
+        
         async createPrivateChat(root, { input }, context) {
 
             var currentID = getUserID(context);
             var member = [currentID, input.friendID];
-
+            
+            var isPrivateChatExist = await ChatPrivate.find({ $and: [{ "host": currentID }, { "member": { $in: [input.friendID] } }] });
+            if (isPrivateChatExist.length > 0) {
+                return onError('fail', "Can not create. Duplicate.")
+            }
+            
+            
             var newInput = _.assign({}, input, { "host":currentID,"member": member });
 
             return ChatPrivate.create(newInput).then((v) => {

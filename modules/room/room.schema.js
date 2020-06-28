@@ -53,6 +53,7 @@ module.exports = typeDef = gql`
 
    }
    type Mutation{
+        changeGroupImage(groupID:String!,avatar:String!,cover:String!):ResultCRUD
         changeGroupPhoto(groupID:String!,type:GroupImage,url:String!):ResultCRUD
         RmvMbFrRoom(type:String!,memberID:String,roomID:String):ResultCRUD
         """
