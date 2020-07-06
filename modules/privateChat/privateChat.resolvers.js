@@ -7,7 +7,7 @@ const { getUserID } = require('./..//../src/util');
 const subService = require('../../service/subService')
 module.exports = resolvers = {
     Query: {
-        getAllPrivateChat: async (root, { ids, page, limit }, context) => {
+        getAllConservation: async (root, { ids, page, limit }, context) => {
             //subService.getAccountsInfo(context.token,)
             var accountID = getUserID(context);
             ids.push(accountID);

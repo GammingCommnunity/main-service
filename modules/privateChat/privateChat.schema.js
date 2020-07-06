@@ -12,7 +12,7 @@ module.exports = typeDef = gql`
             """
             *** Lấy tất cả các chát riêng tư ***
             """
-            getAllPrivateChat(ids: [String] = [],page:Int! = 1,limit:Int! = 10):[PrivateChat]
+            getAllConservation(ids: [String] = [],page:Int! = 1,limit:Int! = 10):[PrivateChat]
             """
             *** Lấy tất cả các tin nhắn, có pagiante , page tăng dần từ 1 -> n,limit (muốn lấy bao nhiêu tin nhắn) ***
             """
@@ -21,6 +21,9 @@ module.exports = typeDef = gql`
             *** Lấy thông tin của chat riêng tư , có vẻ ko cần thiết ***
             """
             getPrivateChatInfo(roomID:String):String
+             """
+            *** Lấy thông tin của các file, tập tin của chat ***
+            """
             getPrivateMedia(chatID:String):[Media]
         }
         extend type Mutation{
