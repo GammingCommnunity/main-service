@@ -1,16 +1,19 @@
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
+const pubsub = new PubSub();
+
 module.exports = resolvers = {
     Subscription: {
 
-        onJoinRoom: {
+        joinRoomNotification: {
             subscribe: withFilter(
-                () => pubsub.asyncIterator([JOIN_ROOM]),
-                (payload, variable) => {
-                    if (variable.onJoinRoom.type == 1) {
-                        // user notfication
-
-                    }
-                    else return payload.onJoinRoom.hostID === variable.hostID
+                () => pubsub.asyncIterator('JOIN_ROOM'),
+                (payload, variable, context) => {
+                    return payload.joinRoomNotification.hostID === context.currentUser
+                    // if (payload.joinRoomNotification.type == 1) {
+                    //     // user notfication
+                    //     return payload.joinRoomNotification.hostID === context.currentUser
+                    // }
+                    // else return payload.joinRoomNotification.hostID === context.currentUser
                 }
             )
         },

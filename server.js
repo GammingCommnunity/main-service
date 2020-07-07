@@ -7,6 +7,10 @@ const checkSession = require('./middleware/checkSession');
 const cors = require('cors');
 const env = require('./env');
 const serverService = require('./service/serverService');
+const authService = require('./service/authService');
+const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
+const pubsub = new PubSub()
+
 /*const { SubscriptionServer } = require('subscriptions-transport-ws');
 const buildDataloaders = require('./src/dataloader');
 const { Room, getRoomLoader } = require('./models/room');
@@ -25,37 +29,49 @@ const server = new ApolloServer({
             { retries: 10, retry: 10000 })
     },
 
-    context: async ({ req, res }) => {
-        const token = req.headers.token || null;
-        const authCode = req.headers.auth_code;
-        if (token == null && authCode == env.main_server_code) {
-            return {
-                token: ""
-            }
+    context: async ({ req, res, connection }) => {
+        if (connection) {            
+            return connection.context;
         }
         else {
-            const errorInfo = {
-                "message": "Wrong token!",
-                "status": "400"
+            const token = req.headers.token || null;
+            const authCode = req.headers.auth_code;
+            if (token == null && authCode == env.main_server_code) {
+                return {
+                    token: ""
+                }
             }
-            var info = JSON.parse(res.info);
+            else {
+                const errorInfo = {
+                    "message": "Wrong token!",
+                    "status": "400"
+                }
+                var info = JSON.parse(res.info);
 
-            if (info.status != "SUCCESSFUL") {
-                return res.json(errorInfo)
+                if (info.status != "SUCCESSFUL") {
+                    return res.json(errorInfo)
+                }
+                return {
+                    authInfo: info.data,
+                    token: token,
+                    pubSub: pubsub
+                    /* dataloaders: {
+                         roomLoader: getRoomLoader(),
+                         listGameLoader: getListGameLoader()
+                     }*/
+                };
             }
-            return {
-                authInfo: info.data,
-                token: token
-                /* dataloaders: {
-                     roomLoader: getRoomLoader(),
-                     listGameLoader: getListGameLoader()
-                 }*/
-            };
         }
-
-
-
-
+        
+    },
+    subscriptions: {
+        onConnect: async (connectionParams, webSocket) =>{
+            var accountID = await authService(connectionParams.token);
+            console.log('Websocket CONNECTED');
+            
+            return accountID; 
+        },
+        onDisconnect: () => console.log('Websocket disconnect '),
     }
 
 });

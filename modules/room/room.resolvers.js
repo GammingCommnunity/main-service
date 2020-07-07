@@ -12,6 +12,23 @@ const JOIN_ROOM = 'JOIN_ROOM';
 var _ = require('lodash');
 
 module.exports = resolvers = {
+    Subscription: {
+
+        joinRoomNotification: {
+            subscribe: withFilter(
+                () => pubsub.asyncIterator('JOIN_ROOM'),
+                (payload, variable, context) => {
+                    // request for 
+                    if (payload.joinRoomNotification.type === 1) {
+
+                        return payload.joinRoomNotification.requestID === context.currentUser
+                    }
+                    return payload.joinRoomNotification.hostID === context.currentUser
+
+                }
+            )
+        },
+    },
     Query: {
         searchRoom: async (root, { query, gameID, hideJoined }, ctx) => {
             var accountID = getUserID(ctx);
@@ -314,7 +331,7 @@ module.exports = resolvers = {
                 const isRequest = await checkRequestExist(roomID, accountID);
                 const inPending = await inPendingList(roomID, accountID); // has value in pendingRequest
 
-                // check already a member
+                // check already a member                
 
                 if (await isJoinRoom(roomID, accountID)) {
                     return onError('fail', "You are member!")
@@ -324,14 +341,16 @@ module.exports = resolvers = {
                     return Room.findOneAndUpdate({ "_id": roomID }, { $push: { "member": accountID } }).then((_) => {
                         const newComer = {
                             "type": 1,
+                            "roomID": roomID,
                             "roomName": roomInfo.roomName,
-                            "hostID": info.hostID,
-                            "userID": apporoveResult.userID,
-                            "joinTime": apporoveResult.joinTime,
+                            "hostID": roomInfo.hostID,
+                            "requestID": accountID,
+                            "joinTime": new Date().toLocaleString("vi-VI", { timeZone: "Asia/Ho_Chi_Minh" }),
                             "message": `Welcome to ${roomInfo.roomName}`,
                             "isApprove": true
                         }
-                        pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
+                        pubsub.publish(JOIN_ROOM, { joinRoomNotification: newComer })
+                        return onSuccess("Join success");
                     });
 
                 }
@@ -352,27 +371,29 @@ module.exports = resolvers = {
                 else {
                     const info = {
                         hostID: await getHostID(roomID),
-                        userID: accountID,
+                        requestID: accountID,
                         roomID: roomID
                     }
                     // add user request to approveList
                     const apporoveResult = await addApprove(info);
+                    
                     if (_ != null) {
                         const addToPending = await updateRoom("", roomID, { $push: { "pendingRequest": accountID } });
                         const newComer = {
                             "type": 2,
+                            "roomID":roomID,
                             "roomName": roomInfo.roomName,
                             "hostID": roomInfo.hostID,
-                            "userID": apporoveResult.userID,
-                            "message": "Your request has been recorded. Wait for accept.",
+                            "requestID": apporoveResult.requestID,
+                            "message": `${apporoveResult.requestID} send a request to ${roomInfo.roomName} group`,
                             "joinTime": apporoveResult.joinTime,
                             "isApprove": false
                         }
-                        pubsub.publish([JOIN_ROOM], { onJoinRoom: newComer })
+                        pubsub.publish(JOIN_ROOM, { joinRoomNotification: newComer })
 
                         return onSuccess("Waiting for apporove", apporoveResult._id);
                     }
-                    return onSuccess("fail", "Has error")
+                    return onError("fail", "Has error")
                 }
 
             }

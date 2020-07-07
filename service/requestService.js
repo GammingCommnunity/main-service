@@ -11,5 +11,9 @@ module.exports = {
         } catch (error) {
             return null;
         }
+    },
+    getRequestInfo: async (requestID) => {
+        return ApporoveList.findOne({ _id: requestID });
     }
+
 }

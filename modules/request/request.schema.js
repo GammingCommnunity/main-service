@@ -6,7 +6,7 @@ extend type Query{
    getPendingJoinRoom_User:[ApproveList]
 }
  extend type Mutation{
-    acceptUserRequest(requestID:String,roomID:String):ResultCRUD
-    cancelRequest(roomID:String, requestID:String):ResultCRUD
+    acceptUserRequest(requestID:String!):ResultCRUD
+    cancelRequest(requestID:String!):ResultCRUD
  }
 `

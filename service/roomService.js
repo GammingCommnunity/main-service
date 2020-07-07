@@ -6,7 +6,7 @@ const { onError, onSuccess } = require('../src/error_handle');
 const env = require('../env');
 const _ = require('lodash');
 var crypto = require("crypto");
-
+const mongoose = require('mongoose');
 module.exports = {
     generateInviteCode: () => crypto.randomBytes(3).toString('hex'),
     searchByCode: async (query, gameID, accountID, hideJoined = true) => {
@@ -65,7 +65,7 @@ module.exports = {
 
         ])
     },
-    searchByRoomName: async (query, gameID, accountID, hideJoined= true) => {
+    searchByRoomName: async (query, gameID, accountID, hideJoined = true) => {
         if (gameID != (null || undefined)) {
             return await Room.aggregate([
 
@@ -77,7 +77,7 @@ module.exports = {
                             { roomType: { $ne: "hidden" } },
                             hideJoined ? { "member": { $nin: [accountID] } } : {}
                         ],
-                        
+
                     }
                 },
 
@@ -158,8 +158,11 @@ module.exports = {
         return result.hostID;
     },
     isJoinRoom: async (roomID, userID) => {
-        var result = await Room.aggregate([{ $match: { "member": { $in: [userID] }, "hostID": { $ne: userID }, "_id": roomID } }]);
-        return result.length == 1 ? true : false;
+        var result = await Room.aggregate([
+            { $match: { "_id": new mongoose.Types.ObjectId(roomID), "member": { $in: [userID] }, "hostID": { $ne: userID }, } },
+
+        ])        
+        return result.length == 0 ? false : true;
     },
     inPendingList: async (roomID, userID) => {
         var result = await Room.find({ _id: roomID, "pendingRequest": { $in: [userID] } });
@@ -210,17 +213,17 @@ module.exports = {
             return false;
         }
     },
-    
+
     deleteRoom: async (roomID, userID) => {
         // implement check token here
         var result = await Room.deleteOne({ "_id": roomID });
         return result.ok == 1 ? true : false;
     },
-    deleteRequest: async (accountID, roomID, requestID) => {
+    deleteRequest: async (accountID, requestID) => {
         // host delete request
 
         var isHost = await Room.find({ "_id": roomID, "hostID": accountID }).countDocuments() == 0 ? false : true;
-
+        var roomID = await ApproveList.findOne({ _id: requestID }).select('roomID');
         if (isHost) {
             await ApproveList.deleteOne({
                 "hostID": accountID,
@@ -246,20 +249,17 @@ module.exports = {
     acceptRequest: async (hostID, requestID, roomID) => {
         var result = await ApproveList.findOne({
             _id: requestID,
-        }).select('userID');
-        console.log(result);
+        }).select('requestID');
 
         var deleteResult = await ApproveList.deleteOne({ _id: requestID });
 
         if (deleteResult.ok == 1) {
 
             // add user to this room
-            console.log(result);
-
             await Room.findByIdAndUpdate(
                 roomID,
-                { $push: { "member": result.userID }, $pull: { "pendingRequest": result.userID } });
-            await RoomChats.findOneAndUpdate({ roomID: roomID }, { $push: { "member": result.userID } })
+                { $push: { "member": result.requestID }, $pull: { "pendingRequest": result.requestID } });
+            await RoomChats.findOneAndUpdate({ roomID: roomID }, { $push: { "member": result.requestID } })
             return true;
         }
         else return false;

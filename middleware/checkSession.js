@@ -39,8 +39,6 @@ module.exports = async (req, res, next) => {
                 var result = await response.json();
                 res.info = JSON.stringify(result);
                 next()
-
-
             }
         }
     }

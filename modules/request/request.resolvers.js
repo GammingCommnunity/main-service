@@ -1,9 +1,24 @@
 const ApproveList = require('../../models/approve_list');
-const { checkRequestExist, addApprove } = require('../../service/requestService');
+const { checkRequestExist, addApprove,getRequestInfo} = require('../../service/requestService');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { getUserID } = require('../../src/util');
-const {deleteRequest,acceptRequest}= require('../../service/roomService');
+const { deleteRequest, acceptRequest,getRoomInfo } = require('../../service/roomService');
+const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
+const pubsub = new PubSub();
+const ACCEPT_REQUEST = 'ACCEPT_REQUEST';
 module.exports = resolvers = {
+    Subscription: {
+
+        acceptRequest: {
+            subscribe: withFilter(
+                () => pubsub.asyncIterator('ACCEPT_REQUEST'),
+                (payload, variable, context) => {
+                    return payload.acceptRequest.receiverID === context.currentUser
+
+                }
+            )
+        },
+    },
     Query: {
         // show ra nhung phong host ma co thanh vien cho 
         manageRequestJoin_Host: async (root, { }, context) => {
@@ -14,7 +29,7 @@ module.exports = resolvers = {
 
         },
         // show ra nhung phong user dang cho duoc duyet 
-        getPendingJoinRoom_User: async (root, { userID }, context) => {
+        getPendingJoinRoom_User: async (root, { }, context) => {
             var accountID = getUserID(context);
 
             return ApproveList.aggregate([{ $match: { "userID": accountID } }]).then((v) => {
@@ -23,19 +38,29 @@ module.exports = resolvers = {
         },
     },
     Mutation: {
-        acceptUserRequest: async (_, { requestID, roomID }, context) => {
+        acceptUserRequest: async (_, { requestID}, context) => {
             var accountID = getUserID(context);
-            var result = await acceptRequest(accountID, requestID, roomID);
-
+            var requestInfo = await getRequestInfo(requestID);
+            var roomInfo = await getRoomInfo(requestInfo.roomID);
+            
+            var result = await acceptRequest(accountID, requestID, requestInfo.roomID);
+            const notify = {
+                receiverID: requestInfo.requestID,
+                message: `Now you're a member of ${roomInfo.roomName}`,
+                time: new Date().toLocaleString("vi-VI", { timeZone: "Asia/Ho_Chi_Minh" }),
+            }
+            console.log(notify);
+            
             if (result) {
+                pubsub.publish(ACCEPT_REQUEST, { acceptRequest: notify})
                 return onSuccess("OK")
             }
             else return onError("fail", "Has error, try again")
         },
-        cancelRequest: async (_, {roomID,requestID},context) => {
+        cancelRequest: async (_, {requestID},context) => {
             var accountID = getUserID(context);
 
-            var result = await deleteRequest(accountID,roomID,requestID);
+            var result = await deleteRequest(accountID,requestID);
             return result ? onSuccess("Cancel success") : onError("fail", "Has error");
         },
 

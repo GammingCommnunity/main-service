@@ -8,7 +8,7 @@ const ApproveList= mongoose.Schema({
         type:String,
         default:""
     },
-    userID:{
+    requestID:{
         type:String,
         default:""
     },
