@@ -1,11 +1,16 @@
 const ApproveList = require('../../models/approve_list');
+const _ = require('lodash');
 const { checkRequestExist, addApprove,getRequestInfo} = require('../../service/requestService');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { getUserID } = require('../../src/util');
+const {getAccountInfo } = require('../../service/accountServices');
 const { deleteRequest, acceptRequest,getRoomInfo } = require('../../service/roomService');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
+const RedisService = require('../../service/redisService');
+const redis = new RedisService();
 const pubsub = new PubSub();
 const ACCEPT_REQUEST = 'ACCEPT_REQUEST';
+const REQUEST_FIELD = 'request_field';
 module.exports = resolvers = {
     Subscription: {
 
@@ -23,9 +28,14 @@ module.exports = resolvers = {
         // show ra nhung phong host ma co thanh vien cho 
         manageRequestJoin_Host: async (root, { }, context) => {
             var accountID = getUserID(context);
-            return ApproveList.aggregate([{ $match: { "hostID": accountID } }]).then((v) => {
-                return v;
-            });
+            //const isKeyAvailable = await redis.isKeyAvailable(accountID, REQUEST_FIELD);
+            var result = await ApproveList.aggregate([
+                { $match: { "hostID": accountID } },
+ 
+
+            ]);
+            return result;
+            
 
         },
         // show ra nhung phong user dang cho duoc duyet 

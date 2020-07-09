@@ -161,7 +161,7 @@ module.exports = {
         var result = await Room.aggregate([
             { $match: { "_id": new mongoose.Types.ObjectId(roomID), "member": { $in: [userID] }, "hostID": { $ne: userID }, } },
 
-        ])        
+        ])
         return result.length == 0 ? false : true;
     },
     inPendingList: async (roomID, userID) => {
@@ -264,6 +264,23 @@ module.exports = {
         }
         else return false;
     },
+    removeMember: async (roomID, memberID) => {
+
+        var result = await Room.findOneAndUpdate({ _id: roomID },
+            { $pull: { "member": { $in: [memberID]} },$push: { "blacklist": memberID } },
+            
+            {
+                new: true,
+                upsert: true,
+                rawResult: true,
+                unique: true
+            });
+        
+        if (result.ok == 1) {
+            return true;
+        }
+        return false;
+    }
 
 
 }

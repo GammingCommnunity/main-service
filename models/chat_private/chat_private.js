@@ -54,7 +54,10 @@ const messageSchema = mongoose.Schema({
 
 const ChatPrivate = mongoose.Schema({
     host: String,
-    member: [String],
+    member: {
+        type: [String],
+        unique: true
+    },
     messages: [
         messageSchema
     ]

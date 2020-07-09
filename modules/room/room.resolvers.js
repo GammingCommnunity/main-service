@@ -1,5 +1,5 @@
 const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
-    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode, searchByRoomName, searchByCode } = require('../../service/roomService');
+    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode, searchByRoomName, searchByCode , removeMember} = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
@@ -225,7 +225,7 @@ module.exports = resolvers = {
     Mutation: {
         changeGroupImage: async (root, { groupID, avatar, cover }, context) => {
             var currentID = getUserID(context);
-            return Room.findByIdAndUpdate(groupID, { $set: { roomLogo: avatar, roomBackground: cover } } ).then((v) => {
+            return Room.findByIdAndUpdate(groupID, { $set: { roomLogo: avatar, roomBackground: cover } }).then((v) => {
                 return onSuccess("Change success!")
             }).catch((err) => onError("fail", "Change failded!"))
         },
@@ -234,16 +234,16 @@ module.exports = resolvers = {
             var code = generateInviteCode();
             var member = roomInput.member;
             var gameName = await gameService.getGameNameById(roomInput.game.gameID);
-           
+
             member.push(accountID)
             var uniqueMember = member.filter((value, index, self) => self.indexOf(value) == index)
-          
-            
+
+
             var roomChatInput = {
                 roomID: "",
                 member: uniqueMember,
                 messages: []
-            }            
+            }
 
             if (!gameName) {
                 return onError('fail', "Game ID not exist! ")
@@ -376,12 +376,12 @@ module.exports = resolvers = {
                     }
                     // add user request to approveList
                     const apporoveResult = await addApprove(info);
-                    
+
                     if (_ != null) {
                         const addToPending = await updateRoom("", roomID, { $push: { "pendingRequest": accountID } });
                         const newComer = {
                             "type": 2,
-                            "roomID":roomID,
+                            "roomID": roomID,
                             "roomName": roomInfo.roomName,
                             "hostID": roomInfo.hostID,
                             "requestID": apporoveResult.requestID,
@@ -425,7 +425,6 @@ module.exports = resolvers = {
         },
         leaveRoom: async (root, { roomID }, context) => {
             var accountID = getUserID(context);
-            console.log(accountID);
 
             return Room.findOneAndUpdate({ _id: roomID }, { $pull: { "member": accountID } }).then((_) => {
                 return RoomChats.findOneAndUpdate({ roomID: roomID }, { $pull: { "member": accountID } }).then((_) => {
@@ -434,6 +433,12 @@ module.exports = resolvers = {
             }).catch((err) => {
                 return onError('fail', "Leave fail")
             })
+        },
+        removeMember: async (root, { roomID, memberID }, context) => {
+            var accountID = getUserID(context);
+            return checkHost(roomID, accountID)
+                ? await removeMember(roomID,memberID).then((_) => onSuccess("Remove member success"))
+                : onError('fail',"You don't have permission to do action.")
         },
         setFindingMember: async (root, { roomID }, ctx) => {
             var accountID = getUserID(ctx);
@@ -444,7 +449,7 @@ module.exports = resolvers = {
             return onError('fail', "Modify fail")
 
         },
-        joinRoomWithFinding: async (root, { roomID,userID }, ctx) => {
+        joinRoomWithFinding: async (root, { roomID, userID }, ctx) => {
             var result = await Room.findOneAndUpdate({ "_id": roomID, "isFindingMember": true }, { $push: { "member": userID } }, { new: true });
             if (result == null) {
                 return onSuccess("Join success!");

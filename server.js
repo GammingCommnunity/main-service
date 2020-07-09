@@ -30,6 +30,7 @@ const server = new ApolloServer({
     },
 
     context: async ({ req, res, connection }) => {
+        var redis = serverService.initRedisServer();
         if (connection) {            
             return connection.context;
         }
@@ -54,11 +55,7 @@ const server = new ApolloServer({
                 return {
                     authInfo: info.data,
                     token: token,
-                    pubSub: pubsub
-                    /* dataloaders: {
-                         roomLoader: getRoomLoader(),
-                         listGameLoader: getListGameLoader()
-                     }*/
+                    redis: redis
                 };
             }
         }
@@ -75,27 +72,8 @@ const server = new ApolloServer({
     }
 
 });
-// const WS_PORT = 5000;
-// const websocketServer = createServer((request, response) => {
-//     response.writeHead(404);
-//     response.end();
-// });
 
-// // Bind it to port and start listening
-// websocketServer.listen(WS_PORT, () => console.log(
-//     `Websocket Server is now running on http://localhost:${WS_PORT}`
-// ));
-// const subscriptionServer = SubscriptionServer.create(
-//     {
-//         Schema,
-//         execute,
-//         subscribe,
-//     },
-//     {
-//         server: websocketServer,
-//         path: '/graphql',
-//     },
-// );
+
 const port = process.env.PORT || 4000;
 const app = express();
 
@@ -105,6 +83,7 @@ server.applyMiddleware({ app, path: "/graphql" })
 const httpServer = createServer(app);
 server.installSubscriptionHandlers(httpServer);
 httpServer.listen(port, () => {
+    //serverService.initRedisServer();
     serverService.initMongoDBServer();
     serverService.initSocketServer(env.main_server_code);
     console.log(`?? Server ready at http://localhost:${port}${server.graphqlPath}`);

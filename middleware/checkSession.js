@@ -1,6 +1,9 @@
 require('dotenv').config();
 const fetch = require('node-fetch');
 const env = require('../env');
+const { getAccountInfo } = require('../service/accountServices');
+const RedisService = require('../service/redisService');
+const redis = new RedisService();
 module.exports = async (req, res, next) => {
     const authUrl = "https://auth-service.glitch.me/auth";
     var authCode = req.headers.auth_code;
@@ -38,6 +41,9 @@ module.exports = async (req, res, next) => {
             else {
                 var result = await response.json();
                 res.info = JSON.stringify(result);
+                var accountInfo = await getAccountInfo(req.headers.token);
+                await redis.setKey(accountInfo.id, 'account', JSON.stringify(accountInfo));
+                
                 next()
             }
         }

@@ -11,6 +11,8 @@ module.exports = {
     getThisAccount: `query{
          getThisAccount{
             id
+            name
+            avatar_url
         }
     }`
 }

@@ -81,6 +81,7 @@ module.exports = typeDef = gql`
         ***Thêm người vào phòng***
         """
         addMember(roomID:String!,memberID:String!):ResultCRUD
+        removeMember(roomID:String!,memberID:String!):ResultCRUD
         leaveRoom(roomID:String!):ResultCRUD
         setFindingMember(roomID:String!):ResultCRUD
         joinRoomWithFinding(roomID:String!,userID:String!):ResultCRUD

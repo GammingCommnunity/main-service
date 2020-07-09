@@ -29,8 +29,14 @@ const Rooms = mongoose.Schema({
     default:1
   },
   hostID: String,
-  member: [String],
-  blacklist: [String],
+  member: {
+    type: [String],
+    unique:true
+  },
+  blacklist: {
+    type: [String],
+    unique: true
+  },
   createAt:{
     type:Date,
     default:Date.now()
@@ -48,8 +54,14 @@ const Rooms = mongoose.Schema({
     type:String,
     default:""
   },
-  pendingRequest: [String],
-  isFindingMember: Boolean,
+  pendingRequest: {
+    type: [String],
+    unique: true
+  },
+  isFindingMember: {
+    type: Boolean,
+    default:false
+  },
   
 })
 
