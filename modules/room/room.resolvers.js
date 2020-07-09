@@ -1,11 +1,12 @@
 const { getRoomInfo, getHostID, editRoom, checkHost, deleteRoom, updateRoom, deleteJoinRequest, confirmJoinRequest
-    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode, searchByRoomName, searchByCode , removeMember} = require('../../service/roomService');
+    , inPendingList, isJoinRoom, initGroupPost, generateInviteCode, searchByRoomName, searchByCode, removeMember } = require('../../service/roomService');
 const { getUserID } = require('../../src/util');
 const { onError, onSuccess } = require('../../src/error_handle');
 const { checkRequestExist, addApprove } = require('../../service/requestService');
 const { Room } = require('../../models/room');
 const RoomChats = require('../../models/chat_room');
 const gameService = require('../../service/gameService');
+const mongoose = require('mongoose');
 const { PubSub, PubSubEngine, withFilter } = require('apollo-server');
 const pubsub = new PubSub();
 const JOIN_ROOM = 'JOIN_ROOM';
@@ -218,8 +219,27 @@ module.exports = resolvers = {
         isRNTaken: async (_, { name }, ctx) => {
             return (await Room.aggregate([{ $match: { "roomName": name } }])).length > 0;
 
-        }
+        },
+        manageBlacklist: async (root, { roomID }, context) => {
+            var accountID = getUserID(context);
+            return Room.aggregate([
+                {
+                    $match: { "_id": new mongoose.Types.ObjectId(roomID), "hostID": accountID, }
+                },
+                {
+                    $project: {
+                        "member": {
+                            $cond: [
+                                { $eq: [{ $size: "$blacklist" }, 0] }
+                                , [], "$blacklist"
 
+                            ]
+                        }
+                    }
+                },
+            ]).then((v)=> v[0])
+
+        },
 
     },
     Mutation: {
@@ -437,9 +457,10 @@ module.exports = resolvers = {
         removeMember: async (root, { roomID, memberID }, context) => {
             var accountID = getUserID(context);
             return checkHost(roomID, accountID)
-                ? await removeMember(roomID,memberID).then((_) => onSuccess("Remove member success"))
-                : onError('fail',"You don't have permission to do action.")
+                ? await removeMember(roomID, memberID).then((_) => onSuccess("Remove member success"))
+                : onError('fail', "You don't have permission to do action.")
         },
+
         setFindingMember: async (root, { roomID }, ctx) => {
             var accountID = getUserID(ctx);
             var result = await Room.findOneAndUpdate({ "_id": roomID, "hostID": accountID }, { $set: { isFindingMember: true } }, { new: true });

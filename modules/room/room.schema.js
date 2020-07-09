@@ -32,7 +32,9 @@ module.exports = typeDef = gql`
         gameID:String!
         gameName:String!
     }
-   
+    type Blacklist{
+        member:[String]
+    }
 
    extend type Query{
         """
@@ -51,6 +53,10 @@ module.exports = typeDef = gql`
         roomManager:[Room]
         getAllRoomWithFinding:[Room]
         isRNTaken(name:String!):Boolean
+        """ 
+        ***Quản lý danh sách đen của group***
+        """
+        manageBlacklist(roomID:String!):Blacklist
    }
    type Mutation{
         changeGroupImage(groupID:String!,avatar:String!,cover:String!):ResultCRUD
@@ -69,6 +75,7 @@ module.exports = typeDef = gql`
 
         """
         removeRoom(roomID:ID!):ResultCRUD
+        
         chatRoom(roomID:String!,messages:MessageInput):ResultCRUD
         joinRoom(roomID:String!,roomType:RoomTypeEnum!,code:String):ResultCRUD
         

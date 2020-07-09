@@ -4,7 +4,9 @@
   "description": "A simple API for my college project",
   "main": "server.js",
   "scripts": {
-    "start": "npm run start-redis && nodemon server.js"
+    "redis-server": ".data/redis-stable/src/redis-server --daemonize yes",
+    "redis-cli": ".data/redis/redis-stable/src/redis-cli",
+    "start": "npm run redis-server && nodemon server.js"
   },
   "repository": {
     "type": "git",
