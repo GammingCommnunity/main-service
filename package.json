@@ -4,7 +4,7 @@
   "description": "A simple API for my college project",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "npm run start-redis && nodemon server.js"
   },
   "repository": {
     "type": "git",
