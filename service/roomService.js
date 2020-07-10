@@ -153,6 +153,9 @@ module.exports = {
             return false;
         });
     },
+    countRoomByGameID: async (gameID) => {
+        return await Room.find({ "game.gameID": gameID }).countDocuments();
+    },
     getHostID: async (roomID) => {
         var result = await Room.findOne({ "_id": roomID }).select('hostID');
         return result.hostID;

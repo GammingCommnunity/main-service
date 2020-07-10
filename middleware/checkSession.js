@@ -2,6 +2,7 @@ require('dotenv').config();
 const fetch = require('node-fetch');
 const env = require('../env');
 const { getAccountInfo } = require('../service/accountServices');
+const { getUserID } = require('../src/util');
 const RedisService = require('../service/redisService');
 const redis = new RedisService();
 module.exports = async (req, res, next) => {
@@ -9,10 +10,10 @@ module.exports = async (req, res, next) => {
     var authCode = req.headers.auth_code;
     // res.header("Access-Control-Allow-Origin", "YOUR-DOMAIN.TLD"); // update to match the domain you will make the request from
     // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-   // header.Add("Access-Control-Allow-Origin", "*")
-  //  header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+    // header.Add("Access-Control-Allow-Origin", "*")
+    //  header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    
+
     if (authCode == env.main_server_code) {
         next()
     }
@@ -41,13 +42,20 @@ module.exports = async (req, res, next) => {
             else {
                 var result = await response.json();
                 res.info = JSON.stringify(result);
-                var accountInfo = await getAccountInfo(req.headers.token);
-                await redis.setKey(accountInfo.id, 'account', JSON.stringify(accountInfo));
                 
-                next()
+                if (await redis.isHKeyAvailable(JSON.parse(res.info).data.accountId, 'account')) {
+                    next()
+                }
+                else {
+                    var accountInfo = await getAccountInfo(req.headers.token);
+                    await redis.setHKey(accountInfo.id, 'account', JSON.stringify(accountInfo));
+                    next()
+                }
+
+
             }
         }
     }
-    
+
 
 }

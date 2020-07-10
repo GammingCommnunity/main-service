@@ -34,7 +34,6 @@ const list_game = mongoose.Schema({
   summary: {
     type: String
   },
-  background:String|null
 
 })
 const ListGame = mongoose.model("ListGame", list_game);

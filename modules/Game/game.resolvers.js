@@ -1,48 +1,25 @@
 const { ListGame } = require('../../models/list_game');
 const { Room } = require('../../models/room');
 const { getGameInfo } = require('../../service/gameService');
+const { countRoomByGameID } = require('../../service/roomService');
 const RoomBackground = require('../../models/room_background')
+const _ = require('lodash');
 module.exports = gameResolvers = {
 
     Query: {
-        getListGame: async (root, { limit }) => {
-            //return ListGame.create(input);
-            if (limit == 1) {
-                return await ListGame.find({}, {}, { slice: { 'images': 1 } }).lean(true).then((f) => {
-                    //var v =  listGameLoader.load(f);
-                    //console.log(listGameLoader.load(f));
+        getListGame: async (root, { page, limit, sort }) => {
 
-                    const mapped = f.map(async (e) => {
-                        var url = "";
-                        return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
+            return ListGame.aggregate([
+                { $skip: page <= 1 ? 0 : (page * 10 - 10) },
+                { $limit: limit },
 
-                            try {
-                                url = val.background.url;
-                                return ({ ...e, "background": url })
-                            } catch (error) {
-                                return ({ ...e, "background": process.env.default_banner })
-                            }
-
-                        });
-
-                    })
-                    return mapped
-                });
-            }
-            if (limit == 0) {
-                return await ListGame.find({}, {}, { slice: { 'images': [1, 100] } }).lean(true).then((f) => {
-
-                    const mapped = f.map(async (e) => {
-                        var url = "";
-                        return RoomBackground.findOne({ "gameID": e._id }).then((val) => {
-                            url = val.background.url;
-                            return ({ ...e, "background": url })
-                        });
-                    })
-                    return mapped;
-
-                });
-            }
+            ]).then(async (v) => {
+                var mapped = await Promise.all(mapped = _.map(v, async (value) => {
+                    const countNum = await countRoomByGameID(value._id);
+                    return _.assign({}, value, { count: countNum })
+                }))
+                return _.orderBy(mapped, ['count'], [sort.toLowerCase()])
+            })
 
         },
         getGameByGenre: async (root, { type }, context) => {
@@ -55,39 +32,10 @@ module.exports = gameResolvers = {
         getSummaryByGameID: async (_, { gameID }) => {
             return ListGame.find({ "_id": gameID }).lean();
         },
-        countRoomOnEachGame: async (_, { sort }, context) => {
-            return ListGame.find({}).select("name game").lean().then(async (v) => {
-                console.log(v);
-
-                let mapped = v.map(async (e) => {
-                    var count = await Room.countDocuments({ "game.gameID": e._id });
-                    var result = await RoomBackground.findOne({ "gameID": e._id });
-                    return ({ ...e, "count": count, "background": result.background.url })
-
-                })
-                // convert from promise to fullfil
-                let values = await Promise.all(mapped.map(async (e) => {
-                    return e;
-                }));
-
-                if (sort == 'ASC') {
-                    values.sort((a, b) => {
-                        return b.count - a.count
-                    });
-                }
-                //descending
-                else if (sort == 'DESC') {
-                    values.sort((a, b) => {
-                        return a.count - b.count
-                    });
-                }
-                return values;
-            });
-        },
         searchGame: async (_, { name, id }) => {
             let regex = new RegExp(name, 'i');
             if (name != "") {
-                return ListGame.where('name').regex(new RegExp(`${name}`, 'i')).then( async (v) => {
+                return ListGame.where('name').regex(new RegExp(`${name}`, 'i')).then(async (v) => {
                     console.log(v);
 
                     return v;

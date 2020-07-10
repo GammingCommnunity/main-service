@@ -26,7 +26,7 @@ module.exports = typeDefs = gql`
         summary:String
         video:VideoType
         background:String
-        count(DESC:String):Int
+        count:Int
     }
     extend type Query{
         """
@@ -37,10 +37,9 @@ module.exports = typeDefs = gql`
         *** Get all game 
             spectify limit to get exactly values u want    ***
         """
-        getListGame(limit:Int!):[Game]
+        getListGame(page:Int!,limit:Int!,sort:SortEnum! = ASC):[Game]
         getGameByGenre(type:String!):[Game]
         getSummaryByGameID(gameID:String!):[Game]
-        countRoomOnEachGame(sort:SortEnum!):[Game]
     }
     extend type Mutation{
         """
