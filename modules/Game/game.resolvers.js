@@ -2,7 +2,6 @@ const { ListGame } = require('../../models/list_game');
 const { Room } = require('../../models/room');
 const { getGameInfo } = require('../../service/gameService');
 const { countRoomByGameID } = require('../../service/roomService');
-const RoomBackground = require('../../models/room_background')
 const _ = require('lodash');
 module.exports = gameResolvers = {
 
@@ -29,8 +28,8 @@ module.exports = gameResolvers = {
                 return v;
             })
         },
-        getSummaryByGameID: async (_, { gameID }) => {
-            return ListGame.find({ "_id": gameID }).lean();
+        getGameInfo: async (_, { gameID }) => {
+            return ListGame.findOne({ "_id": gameID }).lean();
         },
         searchGame: async (_, { name, id }) => {
             let regex = new RegExp(name, 'i');

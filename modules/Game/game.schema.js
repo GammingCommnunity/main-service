@@ -30,16 +30,18 @@ module.exports = typeDefs = gql`
     }
     extend type Query{
         """
-            *** Search game by name or by id (specify one of them)***
+            ***Tìm kiếm game theo tên hoặc theo id game***
         """
         searchGame(name:String,id:String):[Game]
         """
-        *** Get all game 
-            spectify limit to get exactly values u want    ***
+        *** Liệt kê tóm tắt các game channel  ***
         """
         getListGame(page:Int!,limit:Int!,sort:SortEnum! = ASC):[Game]
         getGameByGenre(type:String!):[Game]
-        getSummaryByGameID(gameID:String!):[Game]
+        """
+        *** Lấy thông tin về game **
+        """
+        getGameInfo(gameID:String!):Game
     }
     extend type Mutation{
         """
